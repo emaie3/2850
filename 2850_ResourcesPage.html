@@ -1,0 +1,157 @@
+<!--AI REFERENCE
+Google. (2026, October 21). Creating a basic HTML website for youth isolation awareness. Gemini. https://gemini.google.com
+
+Prompts Used:
+1. create a simple HTML webstie around the topic of youth isolation linking these three websites (https://www.beyondblue.org.au/mental-health/loneliness, https://www.brisbanecitypsychologist.com.au/how-to-gently-cope-with-loneliness/, https://www.ruok.org.au/ending-loneliness-together)
+2. this page is linked to a project i am working on and we want to display some data we collect about the amount of lonely people in a specifoc area where we deploy the project, add a section at the start with placeholder values to show this.
+
+Edits Made:
+- Titles and Content edited to contain correct information/information relavent to our project that is accurate
+- Layout to be more refined and add a part that intorduces the project
+- Small edits to the CSS to change the colour scheme and appearance
+
+Reason for using AI:
+- CSS that adapts to phone screens and easier linking to the existing resources
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Youth Isolation Awareness & Community Data</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-[#FFFFFF] text-[#2D121B] min-h-screen flex flex-col justify-between p-4 sm:p-8 max-w-3xl mx-auto">
+
+    <div>
+        <!-- Header & Introduction -->
+        <header class="space-y-2 mb-8">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-[#851D3E] tracking-tight">
+                Take A Beet
+            </h1>
+            <p class="text-[#4A323A] text-base sm:text-lg leading-relaxed font-medium">
+                What are our aims of the project and who is the team.
+            </p>
+        </header>
+
+        <!-- TOP SECTION: Community Data Tracker -->
+        <section class="bg-[#FFFFFF] rounded-2xl p-5 sm:p-6 shadow-sm border-2 border-[#659C75]/30 mb-8">
+            <div class="flex items-center justify-between border-b border-[#851D3E]/15 pb-3 mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="relative flex h-3 w-3">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#659C75] opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-[#659C75]"></span>
+                    </span>
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-[#851D3E]">
+                        Chermside Shopping Center
+                    </h2>
+                </div>
+                <span class="text-xs font-bold text-[#FFFFFF] bg-[#659C75] px-3 py-1 rounded-full shadow-sm">
+                    Live Data
+                </span>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-2 gap-3">
+                <!-- Stat 1 -->
+                <div class="bg-[#E3DCDD] p-3.5 rounded-xl border border-[#659C75]/20">
+                    <p class="text-xs text-[#5A3F47] font-semibold">Est. Isolated People</p>
+                    <p class="text-xl font-extrabold text-[#851D3E] mt-0.5">
+                        10/25
+                    </p>
+                </div>
+
+                <!-- Stat 2 -->
+                <div class="bg-[#E3DCDD] p-3.5 rounded-xl border border-[#659C75]/20">
+                    <p class="text-xs text-[#5A3F47] font-semibold">Connected Rate</p>
+                    <p class="text-xl font-extrabold text-[#659C75] mt-0.5">
+                        40%
+                    </p>
+                </div>
+            </div>
+            
+            <p class="text-[11px] text-[#5A3F47] text-right mt-3 italic">
+                * Sample metric placeholders
+            </p>
+        </section>
+
+        <!-- Section Title & Intro -->
+        <header class="space-y-3 mb-8">
+            <h2 class="text-2xl sm:text-3xl font-bold text-[#851D3E] leading-tight">
+                Addressing Youth Loneliness & Isolation
+            </h2>
+            <p class="text-[#3B222A] text-sm sm:text-base leading-relaxed">
+                Loneliness is a deeply common experience among young people, especially during school and life transitions. Experiencing social isolation can be challenging, but support and gentle steps toward connection are always within reach. You are not alone.
+            </p>
+        </header>
+
+        <!-- Helpful Resources Section -->
+        <main class="space-y-4 mb-10">
+            <h3 class="text-lg font-bold text-[#851D3E] border-b-2 border-[#659C75] pb-2">
+                Empowering Support Resources
+            </h3>
+
+            <!-- Link 1: Beyond Blue -->
+            <a href="https://www.beyondblue.org.au/mental-health/loneliness" 
+               target="_blank" 
+               rel="noopener noreferrer" 
+               class="block p-5 bg-[#FFFFFF] rounded-xl border-l-4 border-l-[#659C75] border-y border-r border-[#851D3E]/10 shadow-sm hover:shadow-md transition-all group">
+                <h4 class="font-bold text-[#851D3E] group-hover:text-[#659C75] text-base sm:text-lg flex items-center justify-between">
+                    <span>1. Beyond Blue — Loneliness Support</span>
+                    <span class="text-[#659C75] group-hover:translate-x-1 transition-transform">&rarr;</span>
+                </h4>
+                <p class="text-[#4A323A] text-xs sm:text-sm mt-1.5 leading-relaxed">
+                    Learn about loneliness, its impacts on mental health, and actionable steps to build meaningful social connections.
+                </p>
+            </a>
+
+            <!-- Link 2: Brisbane City Psychologist -->
+            <a href="https://www.brisbanecitypsychologist.com.au/how-to-gently-cope-with-loneliness/" 
+               target="_blank" 
+               rel="noopener noreferrer" 
+               class="block p-5 bg-[#FFFFFF] rounded-xl border-l-4 border-l-[#659C75] border-y border-r border-[#851D3E]/10 shadow-sm hover:shadow-md transition-all group">
+                <h4 class="font-bold text-[#851D3E] group-hover:text-[#659C75] text-base sm:text-lg flex items-center justify-between">
+                    <span>2. Brisbane City Psychologist — How to Gently Cope</span>
+                    <span class="text-[#659C75] group-hover:translate-x-1 transition-transform">&rarr;</span>
+                </h4>
+                <p class="text-[#4A323A] text-xs sm:text-sm mt-1.5 leading-relaxed">
+                    A compassionate guide offering gentle psychological strategies to process and navigate feelings of loneliness.
+                </p>
+            </a>
+
+            <!-- Link 3: R U OK? -->
+            <a href="https://www.ruok.org.au/ending-loneliness-together" 
+               target="_blank" 
+               rel="noopener noreferrer" 
+               class="block p-5 bg-[#FFFFFF] rounded-xl border-l-4 border-l-[#659C75] border-y border-r border-[#851D3E]/10 shadow-sm hover:shadow-md transition-all group">
+                <h4 class="font-bold text-[#851D3E] group-hover:text-[#659C75] text-base sm:text-lg flex items-center justify-between">
+                    <span>3. R U OK? — Ending Loneliness Together</span>
+                    <span class="text-[#659C75] group-hover:translate-x-1 transition-transform">&rarr;</span>
+                </h4>
+                <p class="text-[#4A323A] text-xs sm:text-sm mt-1.5 leading-relaxed">
+                    Discover practical ways to start meaningful conversations, foster community belonging, and reach out to others.
+                </p>
+            </a>
+        </main>
+    </div>
+
+    <!-- Helpline / Support Info -->
+    <footer class="bg-[#851D3E] text-[#FFFFFF] rounded-xl p-5 sm:p-6 space-y-3 shadow-md my-4">
+        <h3 class="font-bold text-sm sm:text-base text-[#FFFFFF]">Need immediate support or someone to talk to?</h3>
+        <p class="text-xs text-[#E3DCDD]">Free, confidential support is available 24/7:</p>
+        <ul class="text-xs sm:text-sm space-y-1 font-medium">
+            <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#659C75]"></span><strong class="text-[#FFFFFF]">Lifeline:</strong> 13 11 14</li>
+            <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#659C75]"></span><strong class="text-[#FFFFFF]">Kids Helpline (Ages 5-25):</strong> 1800 55 1800</li>
+            <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#659C75]"></span><strong class="text-[#FFFFFF]">Beyond Blue:</strong> 1300 22 4636</li>
+        </ul>
+    </footer>
+
+</body>
+</html>
