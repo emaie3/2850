@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Community Collage — Ball Prototype</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;1,9..144,400&display=swap');
+
+  :root{
+    --void: #05070d;
+    --mist: rgba(210, 222, 245, 0.62);
+    --mist-dim: rgba(210, 222, 245, 0.30);
+    --line: rgba(140, 165, 210, 0.16);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    background: var(--void);
+    overflow: hidden;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  #stage { position: fixed; inset: 0; display: block; }
+
+  .veil {
+    position: fixed; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 80% 60% at 50% 48%, transparent 40%, rgba(5,7,13,0.55) 100%);
+  }
+
+  /* sits below the dropper tube */
+  .prompt {
+    position: fixed; top: max(86px, 11%); left: 50%; transform: translateX(-50%);
+    text-align: center; width: min(560px, 86vw); pointer-events: none;
+  }
+  .prompt .eyebrow { font-size: 12.5px; letter-spacing: 0.02em; color: var(--mist-dim); margin: 0 0 10px; }
+  .prompt h1 {
+    font-family: 'Fraunces', serif; font-weight: 300; font-style: italic;
+    font-size: clamp(22px, 3.4vw, 32px); line-height: 1.35;
+    color: rgba(235, 240, 250, 0.92); margin: 0;
+  }
+
+  .footer-readout {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+    font-size: 11.5px; color: var(--mist-dim); letter-spacing: 0.01em;
+  }
+
+  .qr {
+    position: fixed; bottom: 26px; right: 30px; width: 54px; height: 54px;
+    border: 1px solid var(--line); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9.5px; color: var(--mist-dim); letter-spacing: 0.03em;
+    text-align: center; line-height: 1.3;
+  }
+
+  .demo-hint {
+    position: fixed; bottom: 16px; left: 16px;
+    font-size: 10px; letter-spacing: 0.02em;
+    color: rgba(210,222,245,0.18);
+    font-family: 'Space Grotesk', monospace;
+  }
+
+  .reveal {
+    position: fixed; top: 40%; left: 50%; transform: translateX(-50%) translateY(8px);
+    text-align: center; width: min(600px, 88vw);
+    font-family: 'Fraunces', serif; font-style: italic; font-weight: 300;
+    font-size: clamp(20px, 3vw, 30px);
+    color: rgba(242, 220, 200, 0.95);
+    opacity: 0; pointer-events: none;
+    transition: opacity 1.1s ease, transform 1.1s ease;
+  }
+  .reveal.show { opacity: 1; transform: translateX(-50%) translateY(0px); }
+
+  /* ---------- settings (top right) ---------- */
+  .settings {
+    position: fixed; top: 18px; right: 22px; z-index: 10;
+    display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+  }
+  .gear {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid var(--line); background: rgba(255,255,255,0.03);
+    color: var(--mist); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0.5; transition: opacity 0.2s ease, border-color 0.2s ease;
+    padding: 0;
+  }
+  .gear:hover, .gear.active { opacity: 1; border-color: rgba(210,222,245,0.4); }
+  .panel {
+    display: none; width: 240px; padding: 14px 16px 16px;
+    max-height: calc(100vh - 80px); overflow-y: auto;
+    border: 1px solid var(--line); border-radius: 12px;
+    background: rgba(10,14,24,0.9);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    flex-direction: column; gap: 14px;
+    font-size: 11.5px; color: var(--mist);
+  }
+  .panel.open { display: flex; }
+  .panel .row-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .panel .val { color: var(--mist-dim); font-variant-numeric: tabular-nums; }
+  .panel input[type=range] { width: 100%; accent-color: #c9d2e6; margin: 0; }
+  .panel .check { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+  .panel input[type=checkbox] { accent-color: #c9d2e6; width: 15px; height: 15px; margin: 0; cursor: pointer; }
+  .panel textarea, .panel input[type=number] {
+    width: 100%; background: rgba(255,255,255,0.05);
+    border: 1px solid var(--line); border-radius: 6px;
+    padding: 7px 9px; color: rgba(235,240,250,0.92);
+    font-family: inherit; font-size: 12px; outline: none; resize: none;
+  }
+  .panel textarea:focus, .panel input[type=number]:focus { border-color: rgba(210,222,245,0.4); }
+  .panel input[type=number] { width: 84px; }
+  .swatches { display: flex; gap: 10px; }
+  .swatch { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--mist-dim); font-size: 10px; }
+  .swatch input[type=color] {
+    width: 38px; height: 28px; padding: 0; cursor: pointer;
+    border: 1px solid var(--line); border-radius: 6px; background: none;
+  }
+
+  /* ---------- finishing screen ---------- */
+  .finish {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 26px; opacity: 0; pointer-events: none; transition: opacity 1.4s ease;
+    text-align: center; padding: 0 24px;
+  }
+  .finish.show { opacity: 1; pointer-events: auto; }
+  .finish .eyebrow { font-size: 12.5px; letter-spacing: 0.05em; color: var(--mist-dim); text-transform: uppercase; }
+  .finish h1 {
+    font-family: 'Fraunces', serif; font-weight: 300; font-style: italic;
+    font-size: clamp(24px, 4vw, 40px); color: rgba(240,235,250,0.95); margin: 0; max-width: 720px;
+  }
+  .hex-stat { display: flex; align-items: center; gap: 22px; }
+  .hex-cluster { position: relative; width: 130px; height: 130px; flex: none; }
+  .hexcell {
+    position: absolute; width: 40px; height: 46px;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(210,222,245,0.22);
+    transition: background 0.6s ease, border-color 0.6s ease;
+  }
+  .hexcell.filled { border-color: transparent; }
+  .hex-stat p { font-size: 15px; line-height: 1.6; color: rgba(225,232,248,0.82); max-width: 320px; text-align: left; margin: 0; }
+  .finish .closing {
+    font-family: 'Fraunces', serif; font-style: italic; font-weight: 300;
+    font-size: clamp(16px, 2vw, 20px); color: rgba(225,232,248,0.7); max-width: 560px;
+  }
+  .finish .cta {
+    font-size: 13.5px; letter-spacing: 0.03em; color: rgba(242,200,165,0.9);
+    border: 1px solid rgba(242,200,165,0.3); border-radius: 24px; padding: 12px 26px; margin-top: 4px;
+  }
+  .finish .restart-hint { position: absolute; bottom: 26px; font-size: 11px; color: var(--mist-dim); }
+</style>
+</head>
+<body>
+
+<canvas id="stage"></canvas>
+<div class="veil"></div>
+
+<div class="prompt">
+  <p class="eyebrow">question</p>
+  <h1 id="promptText">When did you last feel truly seen by someone near you?</h1>
+</div>
+
+<div class="reveal" id="reveal"></div>
+
+<div class="settings">
+  <button class="gear" id="gear" aria-label="Settings" title="Settings">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
+      <line x1="2" y1="4" x2="14" y2="4"/><circle cx="10" cy="4" r="1.7" fill="#05070d"/>
+      <line x1="2" y1="8" x2="14" y2="8"/><circle cx="5.5" cy="8" r="1.7" fill="#05070d"/>
+      <line x1="2" y1="12" x2="14" y2="12"/><circle cx="11" cy="12" r="1.7" fill="#05070d"/>
+    </svg>
+  </button>
+  <div class="panel" id="panel">
+    <div>
+      <div class="row-head"><span>Question</span></div>
+      <textarea id="questionInput" rows="3"></textarea>
+    </div>
+    <div>
+      <div class="row-head"><span>Results needed</span></div>
+      <input type="number" id="maxInput" min="1" max="500" step="1" value="75">
+    </div>
+    <div>
+      <div class="row-head"><span>Cloud size</span><span class="val" id="cloudVal">1.00×</span></div>
+      <input type="range" id="cloudRange" min="0.5" max="1.8" step="0.05" value="1">
+    </div>
+    <div>
+      <div class="row-head"><span>Ball size</span><span class="val" id="sizeVal">1.00×</span></div>
+      <input type="range" id="sizeRange" min="0.5" max="2" step="0.05" value="1">
+    </div>
+    <div>
+      <div class="row-head"><span>Speed</span><span class="val" id="speedVal">1.00×</span></div>
+      <input type="range" id="speedRange" min="0.2" max="3" step="0.05" value="1">
+    </div>
+    <div>
+      <div class="row-head"><span>Ball colours</span></div>
+      <div class="swatches" id="swatches"></div>
+    </div>
+    <label class="check"><span>Dropper tube</span><input type="checkbox" id="tubeToggle" checked></label>
+    <label class="check"><span>Passing lines</span><input type="checkbox" id="linesToggle"></label>
+  </div>
+</div>
+
+<div class="footer-readout">
+  <span id="countReadout">0 of 75 responses</span>
+</div>
+
+<div class="qr">SCAN<br>FOR<br>RESULTS</div>
+<div class="demo-hint">demo only — 1&ndash;4 adds a ball · R resets</div>
+
+<div class="finish" id="finish">
+  <p class="eyebrow">the cloud is full</p>
+  <h1 id="finishHeadline">75 people paused here.</h1>
+  <div class="hex-stat">
+    <div class="hex-cluster" id="clusterA"></div>
+    <p id="statA"></p>
+  </div>
+  <p class="closing">Loneliness rarely looks like being alone. Here, it looked like a room full of people, each quietly carrying the same feeling.</p>
+  <div class="cta">Say hello to someone near you before you go.</div>
+  <p class="restart-hint">press R to begin again</p>
+</div>
+
+<script>
+// =====================================================================
+//  COLOURS — edit these four hexes to restyle the cloud (or use the
+//  colour pickers in the settings panel while it's running).
+//  Key 1–4 on the keyboard (= the four physical buttons) map to 1–4 here.
+// =====================================================================
+const PALETTES = {
+  figma:    { 1: '#851D3E', 2: '#E3DCDD', 3: '#FFFFFF', 4: '#659C75' },
+  // the original cold-to-warm set, kept so we can switch back:
+  original: { 1: '#4770AE', 2: '#7A77A2', 3: '#B18986', 4: '#E89F63' },
+};
+const ACTIVE_PALETTE = 'figma';                       // <- change to 'original' to switch back
+const CAT_COLORS = Object.assign({}, PALETTES[ACTIVE_PALETTE]);   // live copy the pickers edit
+
+// colour a ball shows while falling (and between pulses) so the vote stays anonymous
+const HIDDEN_GREY = '#8a8a91';
+
+const CAT_LABEL = { 1: "distant", 2: "unsettled", 3: "hopeful", 4: "close" };
+
+// ---------- canvas ----------
+const canvas = document.getElementById('stage');
+const ctx = canvas.getContext('2d');
+let W, H, DPR;
+
+function resize(){
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  canvas.width = W * DPR; canvas.height = H * DPR;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ---------- helpers ----------
+function lerp(a,b,t){ return a + (b-a)*t; }
+function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+function hexToRgb(hex){ const n = parseInt(hex.slice(1),16); return [(n>>16)&255,(n>>8)&255,n&255]; }
+function mixRgb(a,b,t){ return [lerp(a[0],b[0],t), lerp(a[1],b[1],t), lerp(a[2],b[2],t)]; }
+function css(rgb, a){ return `rgba(${rgb[0]|0},${rgb[1]|0},${rgb[2]|0},${a===undefined?1:a})`; }
+function easeInOutQuad(t){ return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; }
+
+function randomUnitVector(){
+  const z = Math.random()*2-1;
+  const a = Math.random()*Math.PI*2;
+  const r = Math.sqrt(1-z*z);
+  return [r*Math.cos(a), r*Math.sin(a), z];
+}
+function cross(a,b){ return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]; }
+function normalize(v){ const l = Math.hypot(v[0],v[1],v[2]) || 1; return [v[0]/l, v[1]/l, v[2]/l]; }
+
+const GREY_RGB = hexToRgb(HIDDEN_GREY);
+
+// ---------- settings ----------
+const settings = {
+  size: 1,         // ball size multiplier
+  speed: 1,        // orbit speed multiplier
+  cloud: 1,        // overall cloud size multiplier
+  maxVotes: 75,    // results needed before the finish screen
+  lines: false,    // passing lines (off for now)
+  tube: true,      // dropper tube at the top
+};
+
+// ---------- ball cloud state ----------
+const TRAIL_LEN = 22;
+const FALL_MS = 1400;           // time for a ball to drop from the tube into the cloud
+const cloudCenter = { x: 0, y: 0 };
+let cloudRadius = 0;
+
+function layoutCenter(){
+  cloudCenter.x = W/2;
+  cloudCenter.y = H*0.6;
+  cloudRadius = Math.min(W,H) * 0.21 * settings.cloud;
+}
+layoutCenter();
+window.addEventListener('resize', layoutCenter);
+
+let particles = [];
+let responseCount = 0;
+let lastRevealAt = 0;
+let categoryCounts = {1:0,2:0,3:0,4:0};
+let lastCategory = null;
+let ended = false;
+let simTime = 0;   // seconds, scaled by the speed setting so changing speed never jumps
+
+function updateReadout(){
+  document.getElementById('countReadout').textContent = `${responseCount} of ${settings.maxVotes} responses`;
+}
+
+// ---------- dropper tube ----------
+function tubeGeom(){
+  return {
+    x: W/2,
+    w: 30 + 26*settings.size,                        // grows with ball size so balls always fit
+    mouthY: Math.round(Math.max(56, H*0.08)),
+  };
+}
+
+function roundedRectPath(x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.arcTo(x+w, y, x+w, y+r, r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
+  ctx.lineTo(x+r, y+h);
+  ctx.arcTo(x, y+h, x, y+h-r, r);
+  ctx.lineTo(x, y+r);
+  ctx.arcTo(x, y, x+r, y, r);
+  ctx.closePath();
+}
+
+function drawTube(){
+  const g = tubeGeom();
+  const x0 = g.x - g.w/2;
+
+  ctx.save();
+  // glass body, running off the top of the screen
+  ctx.fillStyle = 'rgba(210,222,245,0.05)';
+  ctx.fillRect(x0, -4, g.w, g.mouthY + 4);
+  ctx.strokeStyle = 'rgba(210,222,245,0.28)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x0, -4);           ctx.lineTo(x0, g.mouthY);
+  ctx.moveTo(x0 + g.w, -4);     ctx.lineTo(x0 + g.w, g.mouthY);
+  ctx.stroke();
+
+  // collar around the opening
+  const cw = g.w + 16, ch = 10;
+  roundedRectPath(g.x - cw/2, g.mouthY - 2, cw, ch, 4);
+  ctx.fillStyle = 'rgba(210,222,245,0.12)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(210,222,245,0.4)';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ---------- adding a ball ----------
+function addParticle(cat){
+  if (ended) return;
+
+  // every ball orbits on its own randomly tilted plane
+  const axis = randomUnitVector();
+  const helper = Math.abs(axis[2]) < 0.9 ? [0,0,1] : [1,0,0];
+  const u = normalize(cross(axis, helper));
+  const v = cross(axis, u);
+
+  // where it starts: inside the tube if there is one, otherwise just above the screen
+  let lx, ly;
+  if (settings.tube){
+    const g = tubeGeom();
+    lx = g.x + (Math.random()-0.5)*4;
+    ly = g.mouthY - 70;
+  } else {
+    lx = cloudCenter.x + (Math.random()-0.5)*60;
+    ly = -40;
+  }
+
+  const p = {
+    cat, u, v,
+    orbitK: 0.55 + Math.random()*0.55,      // orbit size as a fraction of the cloud radius
+    phase: Math.random()*Math.PI*2,
+    speed: (0.18 + Math.random()*0.26) * (Math.random()<0.5?-1:1),
+    wobblePhase: Math.random()*Math.PI*2,
+    wobbleSpeed: 0.2 + Math.random()*0.3,
+    radiusDrift: 0.05 + Math.random()*0.07,
+    bobPhase: Math.random()*Math.PI*2,
+    bobSpeed: 0.35 + Math.random()*0.5,
+    bobAmp: 3 + Math.random()*5,
+    baseR: 9 + Math.random()*4,
+    rgb: hexToRgb(CAT_COLORS[cat]),
+    born: performance.now(),
+    lx, ly,
+    trail: [],
+    // colour pulse state: 0 = fully grey, 1 = true colour
+    reveal: 0,
+    pulseStart: -1, pulseDur: 0, pulsePeak: 0, nextPulse: null,
+  };
+
+  // unit-size orbit ellipse; scaled by the live cloud radius each frame
+  // so the cloud-size slider can resize existing orbits
+  p.ringUnit = [];
+  const RING_STEPS = 64;
+  for (let i=0;i<=RING_STEPS;i++){
+    const a = (i/RING_STEPS) * Math.PI*2;
+    p.ringUnit.push([
+      Math.cos(a)*p.u[0] + Math.sin(a)*p.v[0],
+      (Math.cos(a)*p.u[1] + Math.sin(a)*p.v[1]) * 0.62,
+    ]);
+  }
+
+  particles.push(p);
+  if (particles.length > settings.maxVotes) particles.shift();
+  responseCount++;
+  categoryCounts[cat]++;
+  lastCategory = cat;
+  updateReadout();
+
+  if (responseCount % 15 === 0 && responseCount !== lastRevealAt && responseCount < settings.maxVotes){
+    lastRevealAt = responseCount;
+    triggerReveal();
+  }
+  if (responseCount >= settings.maxVotes){
+    ended = true;
+    setTimeout(showFinish, 700);
+  }
+}
+
+const revealLines = [
+  '15 people near you have felt this.',
+  'The cloud is filling up.',
+  'You are one of many, standing closer than you think.',
+];
+function triggerReveal(){
+  const el = document.getElementById('reveal');
+  const line = revealLines[Math.min(Math.floor(responseCount/15)-1, revealLines.length-1)];
+  el.textContent = line;
+  el.classList.add('show');
+  setTimeout(()=> el.classList.remove('show'), 4200);
+}
+
+function buildHexCluster(container, total, filledN, color){
+  container.innerHTML = '';
+  const cx = 65, cy = 65, r = 30;
+  const positions = [[0,0]];
+  for (let i=0;i<6 && positions.length<total;i++){
+    const a = Math.PI/180 * (60*i);
+    positions.push([Math.cos(a)*r*1.55, Math.sin(a)*r*1.55]);
+  }
+  for (let i=0;i<total;i++){
+    const div = document.createElement('div');
+    div.className = 'hexcell';
+    const [dx,dy] = positions[i] || [0,0];
+    div.style.left = (cx + dx - 20) + 'px';
+    div.style.top  = (cy + dy - 23) + 'px';
+    if (i < filledN){ div.classList.add('filled'); div.style.background = color; }
+    container.appendChild(div);
+  }
+}
+
+function showFinish(){
+  if (!ended) return;   // results target was raised again before this fired
+  const total = responseCount;
+  const topCat = lastCategory || 3;
+  const proportion = categoryCounts[topCat] / total;
+  const outOfSeven = Math.max(1, Math.min(7, Math.round(proportion*7)));
+
+  document.getElementById('finishHeadline').textContent = `${total} people paused here.`;
+  document.getElementById('statA').textContent =
+    `${outOfSeven} out of 7 people who answered felt "${CAT_LABEL[topCat]}" — just like you.`;
+  buildHexCluster(document.getElementById('clusterA'), 7, outOfSeven, CAT_COLORS[topCat]);
+  document.getElementById('finish').classList.add('show');
+}
+
+function resetAll(){
+  ended = false;
+  particles = [];
+  responseCount = 0;
+  lastRevealAt = 0;
+  categoryCounts = {1:0,2:0,3:0,4:0};
+  lastCategory = null;
+  updateReadout();
+  document.getElementById('finish').classList.remove('show');
+}
+
+// ---------- settings panel wiring ----------
+const gearEl = document.getElementById('gear');
+const panelEl = document.getElementById('panel');
+gearEl.addEventListener('click', () => {
+  panelEl.classList.toggle('open');
+  gearEl.classList.toggle('active');
+});
+
+const questionInput = document.getElementById('questionInput');
+questionInput.value = document.getElementById('promptText').textContent;
+questionInput.addEventListener('input', (e) => {
+  document.getElementById('promptText').textContent = e.target.value;
+});
+
+document.getElementById('maxInput').addEventListener('input', (e) => {
+  const n = parseInt(e.target.value, 10);
+  if (!isFinite(n) || n < 1) return;
+  settings.maxVotes = Math.min(n, 500);
+  updateReadout();
+  if (!ended && responseCount >= settings.maxVotes){
+    ended = true;
+    setTimeout(showFinish, 700);
+  } else if (ended && responseCount < settings.maxVotes){
+    ended = false;
+    document.getElementById('finish').classList.remove('show');
+  }
+});
+
+document.getElementById('cloudRange').addEventListener('input', (e) => {
+  settings.cloud = parseFloat(e.target.value);
+  document.getElementById('cloudVal').textContent = settings.cloud.toFixed(2) + '×';
+  layoutCenter();
+});
+document.getElementById('sizeRange').addEventListener('input', (e) => {
+  settings.size = parseFloat(e.target.value);
+  document.getElementById('sizeVal').textContent = settings.size.toFixed(2) + '×';
+});
+document.getElementById('speedRange').addEventListener('input', (e) => {
+  settings.speed = parseFloat(e.target.value);
+  document.getElementById('speedVal').textContent = settings.speed.toFixed(2) + '×';
+});
+document.getElementById('tubeToggle').addEventListener('change', (e) => {
+  settings.tube = e.target.checked;
+});
+document.getElementById('linesToggle').addEventListener('change', (e) => {
+  settings.lines = e.target.checked;
+  if (settings.lines){
+    if (walkers.length === 0) for (let i=0;i<3;i++) spawnWalker();
+  } else {
+    walkers = [];
+    mouseWalker.trail = [];
+    mouseWalker.active = false;
+  }
+});
+
+// one colour picker per vote option
+(function buildSwatches(){
+  const wrap = document.getElementById('swatches');
+  for (const k of [1,2,3,4]){
+    const label = document.createElement('label');
+    label.className = 'swatch';
+    const input = document.createElement('input');
+    input.type = 'color';
+    input.value = CAT_COLORS[k].toLowerCase();
+    input.addEventListener('input', (e) => {
+      CAT_COLORS[k] = e.target.value;
+      const rgb = hexToRgb(CAT_COLORS[k]);
+      for (const p of particles) if (p.cat === k) p.rgb = rgb;   // recolour balls already in the cloud
+    });
+    const cap = document.createElement('span');
+    cap.textContent = String(k);
+    label.appendChild(input);
+    label.appendChild(cap);
+    wrap.appendChild(label);
+  }
+})();
+
+// ---------- drawing a ball (matte: flat colour, glow only while pulsing) ----------
+function drawBall(x, y, R, rgb, alpha, glow){
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  if (glow > 0){ ctx.shadowColor = css(rgb, 0.85); ctx.shadowBlur = R * glow; }
+  ctx.fillStyle = css(rgb);
+  ctx.beginPath();
+  ctx.arc(x, y, R, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function updatePulse(p, t, age){
+  if (age <= FALL_MS){ p.reveal = 0; return; }
+
+  if (p.nextPulse === null) p.nextPulse = t + 300 + Math.random()*2200; // first pulse soon after landing
+
+  if (p.pulseStart < 0 && t >= p.nextPulse){
+    p.pulseStart = t;
+    p.pulseDur = 1800 + Math.random()*2200;
+    p.pulsePeak = 0.8 + Math.random()*0.2;
+  }
+  if (p.pulseStart >= 0){
+    const x = (t - p.pulseStart) / p.pulseDur;
+    if (x >= 1){
+      p.reveal = 0;
+      p.pulseStart = -1;
+      p.nextPulse = t + 1200 + Math.random()*5500;
+    } else {
+      // quick-ish swell, slow fade: reads as liquid rather than a blink
+      p.reveal = p.pulsePeak * Math.pow(Math.sin(Math.PI * Math.pow(x, 0.75)), 2);
+    }
+  } else {
+    p.reveal = 0;
+  }
+}
+
+function drawParticles(t){
+  const cx = cloudCenter.x, cy = cloudCenter.y;
+
+  const projected = particles.map(p => {
+    const age = t - p.born;
+
+    const angle = p.phase + simTime * p.speed;
+    const orbitR = cloudRadius * p.orbitK * (1 + Math.sin(simTime*p.wobbleSpeed + p.wobblePhase) * p.radiusDrift);
+    const x3 = orbitR * (Math.cos(angle)*p.u[0] + Math.sin(angle)*p.v[0]);
+    const y3 = orbitR * (Math.cos(angle)*p.u[1] + Math.sin(angle)*p.v[1]);
+    const z3 = orbitR * (Math.cos(angle)*p.u[2] + Math.sin(angle)*p.v[2]);
+
+    let sx = cx + x3;
+    let sy = cy + y3*0.62 + Math.sin(simTime*p.bobSpeed + p.bobPhase) * p.bobAmp; // gentle float
+
+    if (age < FALL_MS){
+      const k = easeInOutQuad(clamp01(age / FALL_MS));
+      sx = lerp(p.lx, sx, k);
+      sy = lerp(p.ly, sy, k);
+    }
+
+    p.trail.push({x:sx, y:sy});
+    if (p.trail.length > TRAIL_LEN) p.trail.shift();
+
+    updatePulse(p, t, age);
+
+    const depth = (z3 / (orbitR || 1) + 1) / 2;
+    return { sx, sy, p, z3, depth, age };
+  });
+
+  projected.sort((a,b) => a.z3 - b.z3);
+
+  for (const o of projected){
+    const p = o.p;
+    const scale = lerp(0.6, 1.4, o.depth) * (1 + 0.1*p.reveal);
+    const R = p.baseR * scale * settings.size;
+    const alpha = lerp(0.5, 1.0, o.depth);
+
+    // what colour the ball is showing right now: grey, swelling to its true colour
+    const rgb = mixRgb(GREY_RGB, p.rgb, p.reveal);
+
+    // orbit ring — fades in after landing, brightens with the pulse
+    const ringFade = clamp01((o.age - FALL_MS) / 800);
+    if (ringFade > 0){
+      const baseR = cloudRadius * p.orbitK;
+      const ring = p.ringUnit;
+      ctx.beginPath();
+      ctx.moveTo(cx + ring[0][0]*baseR, cy + ring[0][1]*baseR);
+      for (let i=1;i<ring.length;i++){
+        ctx.lineTo(cx + ring[i][0]*baseR, cy + ring[i][1]*baseR);
+      }
+      ctx.strokeStyle = css(rgb);
+      ctx.globalAlpha = (0.08 + 0.12*p.reveal) * ringFade;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    // short trail behind the ball, in its current (possibly grey) colour
+    const trail = p.trail;
+    if (trail.length > 1){
+      for (let i=1;i<trail.length;i++){
+        const a = trail[i-1], b = trail[i];
+        const k = i / trail.length;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.strokeStyle = css(rgb);
+        ctx.globalAlpha = alpha * k * 0.45;
+        ctx.lineWidth = Math.max(0.8, R * 0.6 * k);
+        ctx.lineCap = 'round';
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    drawBall(o.sx, o.sy, R, rgb, alpha, 0.35 + 1.8*p.reveal);
+  }
+}
+
+// ---------- passing lines (off by default; toggled in settings) ----------
+let walkers = [];
+const AVOID_R_FACTOR = 1.7;
+const FADE_MS = 8000;
+
+function spawnWalker(){
+  const fromLeft = Math.random() < 0.5;
+  const y = H * (0.2 + Math.random()*0.65);
+  const speed = 0.55 + Math.random()*0.55;
+  walkers.push({
+    x: fromLeft ? -20 : W+20, y,
+    vx: (fromLeft ? 1 : -1) * speed,
+    vy: (Math.random()-0.5)*0.15,
+    trail: [], exited: false,
+    hue: Math.random()*360,
+    sat: 30 + Math.random()*35,
+    light: 60 + Math.random()*18,
+    alphaMax: 0.16 + Math.random()*0.20,
+  });
+}
+
+const mouseWalker = {
+  x: -999, y: -999, trail: [], active: false,
+  hue: 40, sat: 70, light: 78, alphaMax: 0.34,
+};
+window.addEventListener('mousemove', (e) => {
+  if (!settings.lines) return;
+  mouseWalker.x = e.clientX; mouseWalker.y = e.clientY; mouseWalker.active = true;
+});
+
+function updateWalkers(t){
+  const avoidR = cloudRadius * AVOID_R_FACTOR;
+
+  for (const w of walkers){
+    if (w.exited) continue;
+    const dx = w.x - cloudCenter.x;
+    const dy = w.y - cloudCenter.y;
+    const dist = Math.sqrt(dx*dx + dy*dy*2.6);
+    if (dist < avoidR){
+      const push = 1 - dist/avoidR;
+      w.vx += (dx/(dist||1)) * push * 0.12;
+      w.vy += (dy/(dist||1)) * push * 0.12;
+    }
+    w.vy += (0 - w.vy) * 0.01;
+    const sp = Math.sqrt(w.vx*w.vx + w.vy*w.vy) || 1;
+    w.vx = w.vx/sp*0.7; w.vy = w.vy/sp*0.7;
+    w.x += w.vx * 2.1; w.y += w.vy * 2.1;
+    w.trail.push({x:w.x, y:w.y, t});
+    if (w.x < -60 || w.x > W+60) w.exited = true;
+  }
+
+  walkers = walkers.filter(w => {
+    if (!w.trail.length) return true;
+    return !(w.exited && (t - w.trail[w.trail.length-1].t) > FADE_MS);
+  });
+
+  if (mouseWalker.active){
+    const last = mouseWalker.trail[mouseWalker.trail.length-1];
+    if (!last || Math.hypot(mouseWalker.x-last.x, mouseWalker.y-last.y) > 2){
+      mouseWalker.trail.push({x:mouseWalker.x, y:mouseWalker.y, t});
+    }
+  }
+  mouseWalker.trail = mouseWalker.trail.filter(p => t - p.t < FADE_MS);
+}
+
+function drawTrail(w, t){
+  if (w.trail.length < 2) return;
+  for (let i=1;i<w.trail.length;i++){
+    const a = w.trail[i-1], b = w.trail[i];
+    const age = t - b.t;
+    if (age > FADE_MS) continue;
+    const alpha = w.alphaMax * (1 - age/FADE_MS);
+    if (alpha < 0.004) continue;
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+    ctx.strokeStyle = `hsla(${w.hue},${w.sat}%,${w.light}%,${alpha})`;
+    ctx.lineWidth = 1.4; ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+}
+
+function drawWalkers(t){
+  for (const w of walkers){
+    drawTrail(w, t);
+    if (!w.exited){
+      ctx.beginPath();
+      ctx.arc(w.x, w.y, 2.2, 0, Math.PI*2);
+      ctx.fillStyle = `hsla(${w.hue},${Math.min(w.sat+15,75)}%,${Math.min(w.light+15,92)}%,${w.alphaMax+0.25})`;
+      ctx.fill();
+    }
+  }
+  drawTrail(mouseWalker, t);
+  if (mouseWalker.active){
+    ctx.beginPath();
+    ctx.arc(mouseWalker.x, mouseWalker.y, 2.6, 0, Math.PI*2);
+    ctx.fillStyle = `hsla(${mouseWalker.hue},80%,85%,0.7)`;
+    ctx.fill();
+  }
+}
+
+let lastSpawn = 0;
+function maybeSpawnWalker(t){
+  if (t - lastSpawn > 900 + Math.random()*1400){ spawnWalker(); lastSpawn = t; }
+}
+
+// ---------- main loop ----------
+let lastT = null;
+function frame(t){
+  const dt = lastT === null ? 16 : Math.min(50, t - lastT);
+  lastT = t;
+  simTime += dt * 0.001 * settings.speed;
+
+  ctx.fillStyle = '#05070d';
+  ctx.fillRect(0, 0, W, H);
+
+  if (settings.tube) drawTube();
+
+  if (settings.lines){
+    maybeSpawnWalker(t);
+    updateWalkers(t);
+    drawWalkers(t);
+  }
+  drawParticles(t);
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// ---------- input (1–4 stands in for the four physical vote buttons) ----------
+window.addEventListener('keydown', (e) => {
+  // don't treat typing in the settings fields as votes
+  const tgt = e.target;
+  if (tgt && (tgt.tagName === 'TEXTAREA' || (tgt.tagName === 'INPUT' && (tgt.type === 'text' || tgt.type === 'number')))) return;
+
+  if (['1','2','3','4'].includes(e.key)) addParticle(parseInt(e.key));
+  if (e.key.toLowerCase() === 'r' && ended) resetAll();
+});
+</script>
+
+</body>
+</html>
