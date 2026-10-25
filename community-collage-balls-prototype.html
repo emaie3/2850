@@ -238,7 +238,7 @@ const PALETTES = {
   // the original cold-to-warm set, kept so we can switch back:
   original: { 1: '#4770AE', 2: '#7A77A2', 3: '#B18986', 4: '#E89F63' },
 };
-const ACTIVE_PALETTE = 'figma';                       // <- change to 'original' to switch back
+const ACTIVE_PALETTE = 'figma';                   // <- change to 'original' to switch back
 const CAT_COLORS = Object.assign({}, PALETTES[ACTIVE_PALETTE]);   // live copy the pickers edit
 
 // colour a ball shows while falling (and between pulses) so the vote stays anonymous
@@ -386,9 +386,13 @@ function addParticle(cat){
     ly = -40;
   }
 
+  // orbitK: orbit size as a fraction of the cloud radius
+  // Category 1 (isolation/distant) is placed further away (1.45 to 1.95) than categories 2-4 (0.25 to 0.85)
+  const orbitK = (cat === 1) ? (1.45 + Math.random()*0.50) : (0.25 + Math.random()*0.60);
+
   const p = {
     cat, u, v,
-    orbitK: 0.55 + Math.random()*0.55,      // orbit size as a fraction of the cloud radius
+    orbitK,
     phase: Math.random()*Math.PI*2,
     speed: (0.18 + Math.random()*0.26) * (Math.random()<0.5?-1:1),
     wobblePhase: Math.random()*Math.PI*2,
@@ -454,7 +458,7 @@ function buildHexCluster(container, total, filledN, color){
   const cx = 65, cy = 65, r = 30;
   const positions = [[0,0]];
   for (let i=0;i<6 && positions.length<total;i++){
-    const a = Math.PI/180 * (60*i);
+    const a = (Math.PI/180) * (60*i);
     positions.push([Math.cos(a)*r*1.55, Math.sin(a)*r*1.55]);
   }
   for (let i=0;i<total;i++){

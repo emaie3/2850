@@ -4,14 +4,17 @@ Google. (2026, October 21). Creating a basic HTML website for youth isolation aw
 Prompts Used:
 1. create a simple HTML webstie around the topic of youth isolation linking these three websites (https://www.beyondblue.org.au/mental-health/loneliness, https://www.brisbanecitypsychologist.com.au/how-to-gently-cope-with-loneliness/, https://www.ruok.org.au/ending-loneliness-together)
 2. this page is linked to a project i am working on and we want to display some data we collect about the amount of lonely people in a specifoc area where we deploy the project, add a section at the start with placeholder values to show this.
+3. add a random message generator so that one of ten randomly generated messages is given to the user. 
 
 Edits Made:
 - Titles and Content edited to contain correct information/information relavent to our project that is accurate
 - Layout to be more refined and add a part that intorduces the project
 - Small edits to the CSS to change the colour scheme and appearance
+- Changed the random messages to be evidence based 
 
 Reason for using AI:
 - CSS that adapts to phone screens and easier linking to the existing resources
+- Javascript
 -->
 
 <!DOCTYPE html>
@@ -25,6 +28,13 @@ Reason for using AI:
     <style>
         body {
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
         }
     </style>
 </head>
@@ -62,7 +72,7 @@ Reason for using AI:
             <div class="grid grid-cols-2 sm:grid-cols-2 gap-3">
                 <!-- Stat 1 -->
                 <div class="bg-[#E3DCDD] p-3.5 rounded-xl border border-[#659C75]/20">
-                    <p class="text-xs text-[#5A3F47] font-semibold">Est. Isolated People</p>
+                    <p class="text-xs text-[#5A3F47] font-semibold">Number of Isolated People</p>
                     <p class="text-xl font-extrabold text-[#851D3E] mt-0.5">
                         10/25
                     </p>
@@ -70,7 +80,7 @@ Reason for using AI:
 
                 <!-- Stat 2 -->
                 <div class="bg-[#E3DCDD] p-3.5 rounded-xl border border-[#659C75]/20">
-                    <p class="text-xs text-[#5A3F47] font-semibold">Connected Rate</p>
+                    <p class="text-xs text-[#5A3F47] font-semibold">Level of Connectedness</p>
                     <p class="text-xl font-extrabold text-[#659C75] mt-0.5">
                         40%
                     </p>
@@ -80,6 +90,37 @@ Reason for using AI:
             <p class="text-[11px] text-[#5A3F47] text-right mt-3 italic">
                 * Sample metric placeholders
             </p>
+        </section>
+
+        <!-- RANDOM MESSAGE GENERATOR SECTION -->
+        <section class="bg-gradient-to-br from-[#FFFFFF] to-[#FFFFFF] rounded-2xl p-5 sm:p-6 border-2 border-[#851D3E]/20 shadow-sm mb-8">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold text-[#851D3E] flex items-center gap-2">
+                    <span></span> Daily Encourage-Beet
+                </h2>
+                <span class="text-xs font-medium text-[#5A3F47] bg-[#851D3E]/10 px-2.5 py-1 rounded-full">
+                    A note for you
+                </span>
+            </div>
+
+            <!-- Message Card Display -->
+            <div class="bg-[#E3DCDD] p-4 sm:p-5 rounded-xl border border-[#659C75]/30 min-h-[90px] flex items-center justify-center text-center my-3 shadow-inner">
+                <p id="random-message" class="text-sm sm:text-base font-semibold text-[#851D3E] leading-relaxed italic">
+                    <!-- Message dynamically inserted here -->
+                </p>
+            </div>
+
+            <!-- Action Button -->
+            <div class="flex justify-end mt-3">
+                <button id="generate-btn" 
+                        onclick="generateNewMessage()"
+                        class="bg-[#659C75] hover:bg-[#52825f] active:scale-95 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    New Encouragement
+                </button>
+            </div>
         </section>
 
         <!-- Section Title & Intro -->
@@ -152,6 +193,50 @@ Reason for using AI:
             <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#659C75]"></span><strong class="text-[#FFFFFF]">Beyond Blue:</strong> 1300 22 4636</li>
         </ul>
     </footer>
+
+    <!-- JavaScript Logic for Random Message Generation -->
+    <script>
+        // Array containing 10 supportive and encouraging messages - Adapted from (Third Space. (2024). What to say to someone who feels lonely. Talkthirdspace.Com. https://www.talkthirdspace.com/blog/what-to-say-to-someone-who-feels-lonely)
+        const messages = [
+            "Loneliness can feel overwhelming, but remember that your feelings are valid.", 
+            "You are not alone in this. People care about you deeply and want to support you through this difficult time.",
+            "Even though it may feel like it now, this feeling of loneliness is temporary. It won't last forever, and brighter days are ahead for you.",
+            "You are a remarkable person with so much to offer. Don't forget that there are people who appreciate and value you, even if it doesn't always feel that way.",
+            "Take this time to focus on self-care and doing things that bring you joy. Engaging in activities that make you happy can help combat feelings of loneliness.",
+            "Remember, there are countless opportunities to meet new people and form meaningful connections. Your social circle can expand, and you have the power to create new friendships.",
+            "Plan regular hangouts or outings to have something to look forward to and create opportunities for connection.",
+            "Explore online communities or social media groups centered around your interests, as this can provide a virtual space for connection and interaction.",
+            "Instead of offering unsolicited advice or trying to fix loneliness, focus on actively listening and providing a supportive presence.",
+            "Avoid turning the conversation towards your own experiences, as it may inadvertently divert attention away from their feelings."
+        ];
+
+        let currentIndex = -1;
+
+        function generateNewMessage() {
+            const messageElement = document.getElementById('random-message');
+            
+            // Choose a random index ensuring we don't pick the exact same index twice in a row
+            let newIndex;
+            do {
+                newIndex = Math.floor(Math.random() * messages.length);
+            } while (newIndex === currentIndex && messages.length > 1);
+            
+            currentIndex = newIndex;
+
+            // Apply fade animation
+            messageElement.classList.remove('animate-fade-in');
+            // Trigger reflow to restart animation
+            void messageElement.offsetWidth;
+            
+            messageElement.textContent = messages[currentIndex];
+            messageElement.classList.add('animate-fade-in');
+        }
+
+        // Generate a random message automatically on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            generateNewMessage();
+        });
+    </script>
 
 </body>
 </html>
