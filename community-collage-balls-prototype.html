@@ -154,6 +154,10 @@
     border: 1px solid rgba(242,200,165,0.3); border-radius: 24px; padding: 12px 26px; margin-top: 4px;
   }
   .finish .restart-hint { position: absolute; bottom: 26px; font-size: 11px; color: var(--mist-dim); }
+  .arduino-connect { position:fixed; left:16px; bottom:38px; z-index:20; display:flex; align-items:center; gap:9px; font:11px 'Space Grotesk',sans-serif; color:rgba(210,222,245,.65); }
+  .arduino-connect button { background:rgba(20,28,45,.9); border:1px solid rgba(140,165,210,.4); border-radius:7px; padding:8px 12px; color:#e3e9f5; cursor:pointer; font:inherit; }
+  .arduino-connect button:hover { background:rgba(40,55,80,.9); }
+  .arduino-connect button:disabled { opacity:.55; cursor:default; }
 </style>
 </head>
 <body>
@@ -168,7 +172,6 @@
   </div> 
 </div>
 
-<div class="reveal" id="reveal"></div>
 
 <div class="settings">
   <button class="gear" id="gear" aria-label="Settings" title="Settings">
@@ -213,7 +216,9 @@
 </div> -->
 
 <div class="qr"><img src="https_emaie3_github_io_2850_ (1).png"></div>
-<div class="demo-hint">demo only — 1&ndash;4 adds a ball · R resets</div>
+<div class="demo-hint">1&ndash;4 test votes · R resets after finish</div>
+
+<div class="arduino-connect"><button id="connectArduino" type="button">Connect Arduino</button><span id="arduinoStatus" role="status">Not connected</span></div>
 
 <div class="finish" id="finish">
   <p class="eyebrow">the cloud is full</p>
@@ -306,7 +311,6 @@ window.addEventListener('resize', layoutCenter);
 
 let particles = [];
 let responseCount = 0;
-let lastRevealAt = 0;
 let categoryCounts = {1:0,2:0,3:0,4:0};
 let lastCategory = null;
 let ended = false;
@@ -430,27 +434,10 @@ function addParticle(cat){
   lastCategory = cat;
   updateReadout();
 
-  if (responseCount % 15 === 0 && responseCount !== lastRevealAt && responseCount < settings.maxVotes){
-    lastRevealAt = responseCount;
-    triggerReveal();
-  }
   if (responseCount >= settings.maxVotes){
     ended = true;
     setTimeout(showFinish, 700);
   }
-}
-
-const revealLines = [
-  '15 people near you have felt this.',
-  'The cloud is filling up.',
-  'You are one of many, standing closer than you think.',
-];
-function triggerReveal(){
-  const el = document.getElementById('reveal');
-  const line = revealLines[Math.min(Math.floor(responseCount/15)-1, revealLines.length-1)];
-  el.textContent = line;
-  el.classList.add('show');
-  setTimeout(()=> el.classList.remove('show'), 4200);
 }
 
 function buildHexCluster(container, total, filledN, color){
@@ -490,7 +477,6 @@ function resetAll(){
   ended = false;
   particles = [];
   responseCount = 0;
-  lastRevealAt = 0;
   categoryCounts = {1:0,2:0,3:0,4:0};
   lastCategory = null;
   updateReadout();
@@ -818,6 +804,79 @@ function frame(t){
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+// ---------- USB Arduino input (Chrome / Edge Web Serial) ----------
+const connectArduinoButton = document.getElementById('connectArduino');
+const arduinoStatus = document.getElementById('arduinoStatus');
+let arduinoPort = null;
+let arduinoReader = null;
+let arduinoConnected = false;
+
+function processArduinoLine(line) {
+  const match = /^VOTE:([1-4])$/.exec(line.trim());
+  if (!match) return; // ignore READY, diagnostics, or malformed messages
+  addParticle(Number(match[1])); // same action as pressing keys 1-4
+}
+
+async function readArduino(port) {
+  const decoder = new TextDecoder();
+  let buffer = '';
+  try {
+    while (port.readable && arduinoConnected) {
+      const reader = port.readable.getReader();
+      arduinoReader = reader;
+      try {
+        while (arduinoConnected) {
+          const {value, done} = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, {stream:true});
+          // Keep incomplete lines between USB packets.
+          const lines = buffer.split(/\r?\n/);
+          buffer = lines.pop();
+          for (const line of lines) processArduinoLine(line);
+          if (buffer.length > 256) buffer = ''; // bound malformed input
+        }
+      } finally {
+        reader.releaseLock();
+        arduinoReader = null;
+      }
+      if (!arduinoConnected) break;
+    }
+  } catch (error) {
+    console.error('Arduino serial connection:', error);
+    arduinoStatus.textContent = 'Disconnected — reconnect';
+  } finally {
+    arduinoConnected = false;
+    try { await port.close(); } catch (_) {}
+    if (arduinoPort === port) arduinoPort = null;
+    connectArduinoButton.disabled = false;
+    connectArduinoButton.textContent = 'Connect Arduino';
+    if (arduinoStatus.textContent === 'Connected') arduinoStatus.textContent = 'Disconnected';
+  }
+}
+
+connectArduinoButton.addEventListener('click', async () => {
+  if (!('serial' in navigator)) {
+    arduinoStatus.textContent = 'Use Chrome or Edge on localhost';
+    return;
+  }
+  connectArduinoButton.disabled = true;
+  arduinoStatus.textContent = 'Choose your Arduino port…';
+  try {
+    const port = await navigator.serial.requestPort();
+    await port.open({baudRate:115200});
+    arduinoPort = port;
+    arduinoConnected = true;
+    connectArduinoButton.textContent = 'Arduino connected';
+    arduinoStatus.textContent = 'Connected';
+    // Opening a serial port may reset the Uno; its startup READY line is ignored.
+    void readArduino(port);
+  } catch (error) {
+    console.error('Could not connect Arduino:', error);
+    arduinoStatus.textContent = 'Connection cancelled or port busy';
+    connectArduinoButton.disabled = false;
+  }
+});
 
 // ---------- input (1–4 stands in for the four physical vote buttons) ----------
 window.addEventListener('keydown', (e) => {
