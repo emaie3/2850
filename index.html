@@ -5,16 +5,18 @@ Prompts Used:
 1. create a simple HTML webstie around the topic of youth isolation linking these three websites (https://www.beyondblue.org.au/mental-health/loneliness, https://www.brisbanecitypsychologist.com.au/how-to-gently-cope-with-loneliness/, https://www.ruok.org.au/ending-loneliness-together)
 2. this page is linked to a project i am working on and we want to display some data we collect about the amount of lonely people in a specifoc area where we deploy the project, add a section at the start with placeholder values to show this.
 3. add a random message generator so that one of ten randomly generated messages is given to the user. 
+4. connect live metrics from the display prototype to update the community data section dynamically.
 
 Edits Made:
 - Titles and Content edited to contain correct information/information relavent to our project that is accurate
 - Layout to be more refined and add a part that intorduces the project
 - Small edits to the CSS to change the colour scheme and appearance
-- Changed the random messages to be evidence based 
+- Changed the random messages to be evidence based
+- Added dynamic sync listeners for real-time live data tracking from external collage prototype
 
 Reason for using AI:
 - CSS that adapts to phone screens and easier linking to the existing resources
-- Javascript
+- Javascript & Live Data Synchronization
 -->
 
 <!DOCTYPE html>
@@ -70,33 +72,29 @@ Reason for using AI:
 
             <!-- Stats Grid -->
             <div class="grid grid-cols-2 sm:grid-cols-2 gap-3">
-                <!-- Stat 1 -->
+                <!-- Stat 1: Isolated People -->
                 <div class="bg-[#E3DCDD] p-3.5 rounded-xl border border-[#659C75]/20">
                     <p class="text-xs text-[#5A3F47] font-semibold">Number of Isolated People</p>
-                    <p class="text-xl font-extrabold text-[#851D3E] mt-0.5">
-                        10/25
+                    <p id="stat-isolated" class="text-xl font-extrabold text-[#851D3E] mt-0.5">
+                        0/0
                     </p>
                 </div>
 
-                <!-- Stat 2 -->
+                <!-- Stat 2: Connectedness -->
                 <div class="bg-[#E3DCDD] p-3.5 rounded-xl border border-[#659C75]/20">
                     <p class="text-xs text-[#5A3F47] font-semibold">Level of Connectedness</p>
-                    <p class="text-xl font-extrabold text-[#659C75] mt-0.5">
-                        40%
+                    <p id="stat-connectedness" class="text-xl font-extrabold text-[#659C75] mt-0.5">
+                        0%
                     </p>
                 </div>
             </div>
-            
-            <p class="text-[11px] text-[#5A3F47] text-right mt-3 italic">
-                * Sample metric placeholders
-            </p>
         </section>
 
         <!-- RANDOM MESSAGE GENERATOR SECTION -->
         <section class="bg-gradient-to-br from-[#FFFFFF] to-[#FFFFFF] rounded-2xl p-5 sm:p-6 border-2 border-[#851D3E]/20 shadow-sm mb-8">
             <div class="flex items-center justify-between mb-3">
                 <h2 class="text-lg font-bold text-[#851D3E] flex items-center gap-2">
-                    <span></span> Daily Encourage-Beet
+                    <span>🌱</span> Daily Encourage-Beet
                 </h2>
                 <span class="text-xs font-medium text-[#5A3F47] bg-[#851D3E]/10 px-2.5 py-1 rounded-full">
                     A note for you
@@ -194,9 +192,9 @@ Reason for using AI:
         </ul>
     </footer>
 
-    <!-- JavaScript Logic for Random Message Generation -->
+    <!-- JavaScript Logic -->
     <script>
-        // Array containing 10 supportive and encouraging messages - Adapted from (Third Space. (2024). What to say to someone who feels lonely. Talkthirdspace.Com. https://www.talkthirdspace.com/blog/what-to-say-to-someone-who-feels-lonely)
+        // Array containing 10 supportive and encouraging messages
         const messages = [
             "Loneliness can feel overwhelming, but remember that your feelings are valid.", 
             "You are not alone in this. People care about you deeply and want to support you through this difficult time.",
@@ -215,7 +213,6 @@ Reason for using AI:
         function generateNewMessage() {
             const messageElement = document.getElementById('random-message');
             
-            // Choose a random index ensuring we don't pick the exact same index twice in a row
             let newIndex;
             do {
                 newIndex = Math.floor(Math.random() * messages.length);
@@ -223,18 +220,59 @@ Reason for using AI:
             
             currentIndex = newIndex;
 
-            // Apply fade animation
             messageElement.classList.remove('animate-fade-in');
-            // Trigger reflow to restart animation
-            void messageElement.offsetWidth;
+            void messageElement.offsetWidth; // Trigger reflow
             
             messageElement.textContent = messages[currentIndex];
             messageElement.classList.add('animate-fade-in');
         }
 
-        // Generate a random message automatically on page load
+        // --- LIVE DATA SYNC LOGIC ---
+        function updateLiveData(data) {
+            if (!data) return;
+            const isolatedElem = document.getElementById('stat-isolated');
+            const connectedElem = document.getElementById('stat-connectedness');
+            
+            const total = data.responseCount || 0;
+            const catCounts = data.categoryCounts || {1:0, 2:0, 3:0, 4:0};
+            
+            const isolatedCount = catCounts[1] || 0;
+            // Level of Connectedness = (Category 3 + Category 4) / Total Responses
+            const connectedCount = (catCounts[3] || 0) + (catCounts[4] || 0);
+            const connectedPercentage = total > 0 ? Math.round((connectedCount / total) * 100) : 0;
+
+            if (isolatedElem) isolatedElem.textContent = `${isolatedCount}/${total}`;
+            if (connectedElem) connectedElem.textContent = `${connectedPercentage}%`;
+        }
+
+        function loadSavedData() {
+            try {
+                const stored = localStorage.getItem('take_a_beet_data');
+                if (stored) {
+                    updateLiveData(JSON.parse(stored));
+                }
+            } catch(e) { console.error("Could not load stored stats", e); }
+        }
+
+        // Listen for updates across tabs / windows
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'take_a_beet_data' && e.newValue) {
+                updateLiveData(JSON.parse(e.newValue));
+            }
+        });
+
+        // BroadcastChannel fallback for instant multi-window sync
+        if ('BroadcastChannel' in window) {
+            const channel = new BroadcastChannel('take_a_beet_channel');
+            channel.onmessage = (event) => {
+                if (event.data) updateLiveData(event.data);
+            };
+        }
+
+        // Initial setup on load
         window.addEventListener('DOMContentLoaded', () => {
             generateNewMessage();
+            loadSavedData();
         });
     </script>
 

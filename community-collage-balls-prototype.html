@@ -434,6 +434,13 @@ function addParticle(cat){
   lastCategory = cat;
   updateReadout();
 
+  // --- SYNC TO TAKE A BEET INDEX ---//
+  const currentPayload = { responseCount, categoryCounts };
+  localStorage.setItem('take_a_beet_data', JSON.stringify(currentPayload));
+  if ('BroadcastChannel' in window) {
+      new BroadcastChannel('take_a_beet_channel').postMessage(currentPayload);
+  }
+
   if (responseCount >= settings.maxVotes){
     ended = true;
     setTimeout(showFinish, 700);
