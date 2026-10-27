@@ -5,18 +5,14 @@ Prompts Used:
 1. create a simple HTML webstie around the topic of youth isolation linking these three websites (https://www.beyondblue.org.au/mental-health/loneliness, https://www.brisbanecitypsychologist.com.au/how-to-gently-cope-with-loneliness/, https://www.ruok.org.au/ending-loneliness-together)
 2. this page is linked to a project i am working on and we want to display some data we collect about the amount of lonely people in a specifoc area where we deploy the project, add a section at the start with placeholder values to show this.
 3. add a random message generator so that one of ten randomly generated messages is given to the user. 
-4. connect live metrics from the display prototype to update the community data section dynamically.
+4. connect live metrics from the canvas prototype with visual colored person icons representing each vote category.
 
 Edits Made:
 - Titles and Content edited to contain correct information/information relavent to our project that is accurate
 - Layout to be more refined and add a part that intorduces the project
 - Small edits to the CSS to change the colour scheme and appearance
 - Changed the random messages to be evidence based
-- Added dynamic sync listeners for real-time live data tracking from external collage prototype
-
-Reason for using AI:
-- CSS that adapts to phone screens and easier linking to the existing resources
-- Javascript & Live Data Synchronization
+- Added dynamic person icon grid for real time live data tracking from external collage prototype
 -->
 
 <!DOCTYPE html>
@@ -49,11 +45,11 @@ Reason for using AI:
                 Take A Beet
             </h1>
             <p class="text-[#4A323A] text-base sm:text-lg leading-relaxed font-medium">
-                The aim of this project is to bring awareness to the isolation expereinced by people in the community, mainly focused on young adults. Our team (the Beetroot Baddies) consists of five university students who are highly passionate about this topic.
+                The aim of this project is to bring awareness to the isolation experienced by people in the community, mainly focused on young adults. Our team (the Beetroot Baddies) consists of five university students who are highly passionate about this topic.
             </p>
         </header>
 
-        <!-- TOP SECTION: Community Data Tracker -->
+        <!-- TOP SECTION: Community Data Tracker with Visual People Icons -->
         <section class="bg-[#FFFFFF] rounded-2xl p-5 sm:p-6 shadow-sm border-2 border-[#659C75]/30 mb-8">
             <div class="flex items-center justify-between border-b border-[#851D3E]/15 pb-3 mb-4">
                 <div class="flex items-center gap-2">
@@ -70,8 +66,25 @@ Reason for using AI:
                 </span>
             </div>
 
+            <!-- Visual Crowd Grid (Colored People Icons) -->
+            <div class="bg-[#E3DCDD]/60 p-4 rounded-xl border border-[#659C75]/20">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-[#5A3F47] uppercase tracking-wider">Current Responses</span>
+                    <div class="flex items-center gap-3 text-[10px] font-semibold text-[#5A3F47]">
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#851D3E] inline-block"></span> Isolated</span>
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#659C75] inline-block"></span> Fully Connected</span>
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#8a8a91] inline-block"></span> Other</span>
+                    </div>
+                </div>
+                <!-- Container where person icons are dynamically rendered -->
+                <div id="person-grid" class="flex flex-wrap gap-1.5 min-h-[44px] max-h-36 overflow-y-auto p-1 items-center">
+                    <p class="text-xs text-[#5A3F47] italic w-full text-center py-2">Waiting for live votes from installation...</p>
+                </div>
+            </div>
+
             <!-- Stats Grid -->
-            <div class="grid grid-cols-2 sm:grid-cols-2 gap-3">
+             <br>
+            <div class="grid grid-cols-2 sm:grid-cols-2 gap-3 mb-4">
                 <!-- Stat 1: Isolated People -->
                 <div class="bg-[#E3DCDD] p-3.5 rounded-xl border border-[#659C75]/20">
                     <p class="text-xs text-[#5A3F47] font-semibold">Number of Isolated People</p>
@@ -94,7 +107,7 @@ Reason for using AI:
         <section class="bg-gradient-to-br from-[#FFFFFF] to-[#FFFFFF] rounded-2xl p-5 sm:p-6 border-2 border-[#851D3E]/20 shadow-sm mb-8">
             <div class="flex items-center justify-between mb-3">
                 <h2 class="text-lg font-bold text-[#851D3E] flex items-center gap-2">
-                    <span>🌱</span> Daily Encourage-Beet
+                    <span></span> Daily Encourage-Beet
                 </h2>
                 <span class="text-xs font-medium text-[#5A3F47] bg-[#851D3E]/10 px-2.5 py-1 rounded-full">
                     A note for you
@@ -227,22 +240,49 @@ Reason for using AI:
             messageElement.classList.add('animate-fade-in');
         }
 
-        // --- LIVE DATA SYNC LOGIC ---
+        // --- LIVE DATA & COLORED PEOPLE SYNC LOGIC ---
         function updateLiveData(data) {
             if (!data) return;
             const isolatedElem = document.getElementById('stat-isolated');
             const connectedElem = document.getElementById('stat-connectedness');
+            const personGrid = document.getElementById('person-grid');
             
             const total = data.responseCount || 0;
             const catCounts = data.categoryCounts || {1:0, 2:0, 3:0, 4:0};
             
             const isolatedCount = catCounts[1] || 0;
-            // Level of Connectedness = (Category 3 + Category 4) / Total Responses
-            const connectedCount = (catCounts[3] || 0) + (catCounts[4] || 0);
+            const connectedCount = catCounts[4] || 0;
             const connectedPercentage = total > 0 ? Math.round((connectedCount / total) * 100) : 0;
 
             if (isolatedElem) isolatedElem.textContent = `${isolatedCount}/${total}`;
             if (connectedElem) connectedElem.textContent = `${connectedPercentage}%`;
+
+            // Render visual colored people icons
+            if (personGrid) {
+                if (total === 0) {
+                    personGrid.innerHTML = `<p class="text-xs text-[#5A3F47] italic w-full text-center py-2">Waiting for live votes from installation...</p>`;
+                    return;
+                }
+
+                personGrid.innerHTML = '';
+                
+                // Helper to append person SVG icons with specific colors
+                const addIcons = (count, colorClass) => {
+                    for (let i = 0; i < count; i++) {
+                        const iconSpan = document.createElement('span');
+                        iconSpan.className = `transition-transform hover:scale-125 ${colorClass}`;
+                        iconSpan.innerHTML = `<svg class="w-5 h-5 inline-block" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
+                        personGrid.appendChild(iconSpan);
+                    }
+                };
+
+                // Category 1 = Isolated (Red #851D3E)
+                addIcons(catCounts[1] || 0, 'text-[#851D3E]');
+                // Category 4 = Connected (Green #659C75)
+                addIcons(catCounts[4] || 0, 'text-[#659C75]');
+                // Category 2 and 3 = Other / Unsettled (Grey #8a8a91)
+                addIcons((catCounts[3] || 0) + (catCounts[2] || 0), 'text-[#8a8a91]');
+            }
         }
 
         function loadSavedData() {
