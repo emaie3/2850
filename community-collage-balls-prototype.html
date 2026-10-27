@@ -67,6 +67,22 @@
     font-family: 'Space Grotesk', monospace;
   }
 
+  /* ---------- KEY MAPPING OVERLAY ---------- */
+  .key-mapping {
+    position: fixed; bottom: 18px; right: 28%; z-index: 10;
+    display: flex; gap: 8px; background: rgba(10,14,24,0.75);
+    padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line);
+    backdrop-filter: blur(8px);
+  }
+  .key-chip {
+    display: flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(210,222,245,0.85);
+  }
+  .key-badge {
+    width: 20px; height: 20px; border-radius: 5px; font-weight: 600; font-size: 10px;
+    display: flex; align-items: center; justify-content: center; color: white;
+    transition: background-color 0.3s ease;
+  }
+
   .reveal {
     position: fixed; top: 40%; left: 50%; transform: translateX(-50%) translateY(8px);
     text-align: center; width: min(600px, 88vw);
@@ -165,13 +181,20 @@
 <canvas id="stage"></canvas>
 <div class="veil"></div>
 
+<!-- Key Mapping Overlay with ID badges for live color sync -->
+<div class="key-mapping">
+  <div class="key-chip"><span id="badge-1" class="key-badge" style="background:#851D3E;"></span> I often feel this way</div>
+  <div class="key-chip"><span id="badge-2" class="key-badge" style="background:#E3DCDD; color:#2D121B;"></span> I sometimes feel this way</div>
+  <div class="key-chip"><span id="badge-3" class="key-badge" style="background:#FFFFFF; color:#2D121B;"></span> I rarely feel this way</div>
+  <div class="key-chip"><span id="badge-4" class="key-badge" style="background:#659C75;"></span> I never feel this way</div>
+</div>
+
 <div class="prompt">
-  <h1 id="promptText">When did you last feel truly seen by someone near you?</h1>
+  <h1 id="promptText">How often do you feel isolated?</h1>
   <div class="footer-readout">
     <span id="countReadout">0 of 75 responses</span>
   </div> 
 </div>
-
 
 <div class="settings">
   <button class="gear" id="gear" aria-label="Settings" title="Settings">
@@ -211,10 +234,6 @@
   </div>
 </div>
 
-<!--<div class="footer-readout">
-  <span id="countReadout">0 of 75 responses</span>
-</div> -->
-
 <div class="qr"><img src="https_emaie3_github_io_2850_ (1).png"></div>
 <div class="demo-hint">1&ndash;4 test votes · R resets after finish</div>
 
@@ -234,22 +253,35 @@
 
 <script>
 // =====================================================================
-//  COLOURS — edit these four hexes to restyle the cloud (or use the
-//  colour pickers in the settings panel while it's running).
-//  Key 1–4 on the keyboard (= the four physical buttons) map to 1–4 here.
+// COLOURS — edit these four hexes to restyle the cloud
+// Key 1–4 on the keyboard (= the four physical buttons) map to 1–4 here.
 // =====================================================================
 const PALETTES = {
   figma:    { 1: '#851D3E', 2: '#E3DCDD', 3: '#FFFFFF', 4: '#659C75' },
-  // the original cold-to-warm set, kept so we can switch back:
   original: { 1: '#4770AE', 2: '#7A77A2', 3: '#B18986', 4: '#E89F63' },
 };
-const ACTIVE_PALETTE = 'figma';                   // <- change to 'original' to switch back
-const CAT_COLORS = Object.assign({}, PALETTES[ACTIVE_PALETTE]);   // live copy the pickers edit
+const ACTIVE_PALETTE = 'figma';
+const CAT_COLORS = Object.assign({}, PALETTES[ACTIVE_PALETTE]);
 
-// colour a ball shows while falling (and between pulses) so the vote stays anonymous
 const HIDDEN_GREY = '#8a8a91';
-
 const CAT_LABEL = { 1: "distant", 2: "unsettled", 3: "hopeful", 4: "close" };
+
+// Function to update badge colors on the UI overlay
+function updateKeyBadgeColors() {
+  for (const k of [1,2,3,4]) {
+    const badge = document.getElementById(`badge-${k}`);
+    if (badge) {
+      badge.style.backgroundColor = CAT_COLORS[k];
+      // Adjust text color for dark/light backgrounds automatically
+      const hex = CAT_COLORS[k].replace('#','');
+      const r = parseInt(hex.substr(0,2),16);
+      const g = parseInt(hex.substr(2,2),16);
+      const b = parseInt(hex.substr(4,2),16);
+      const yiq = (r*299 + g*587 + b*114) / 1000;
+      badge.style.color = (yiq >= 128) ? '#2D121B' : '#FFFFFF';
+    }
+  }
+}
 
 // ---------- canvas ----------
 const canvas = document.getElementById('stage');
@@ -291,13 +323,13 @@ const settings = {
   speed: 1,        // orbit speed multiplier
   cloud: 1,        // overall cloud size multiplier
   maxVotes: 75,    // results needed before the finish screen
-  lines: false,    // passing lines (off for now)
+  lines: false,    // passing lines
   tube: true,      // dropper tube at the top
 };
 
 // ---------- ball cloud state ----------
 const TRAIL_LEN = 22;
-const FALL_MS = 1400;           // time for a ball to drop from the tube into the cloud
+const FALL_MS = 1400;
 const cloudCenter = { x: 0, y: 0 };
 let cloudRadius = 0;
 
@@ -314,7 +346,7 @@ let responseCount = 0;
 let categoryCounts = {1:0,2:0,3:0,4:0};
 let lastCategory = null;
 let ended = false;
-let simTime = 0;   // seconds, scaled by the speed setting so changing speed never jumps
+let simTime = 0;
 
 function updateReadout(){
   document.getElementById('countReadout').textContent = `${responseCount} of ${settings.maxVotes} responses`;
@@ -324,7 +356,7 @@ function updateReadout(){
 function tubeGeom(){
   return {
     x: W/2,
-    w: 30 + 26*settings.size,                        // grows with ball size so balls always fit
+    w: 30 + 26*settings.size,
     mouthY: Math.round(Math.max(56, H*0.08)),
   };
 }
@@ -348,17 +380,15 @@ function drawTube(){
   const x0 = g.x - g.w/2;
 
   ctx.save();
-  // glass body, running off the top of the screen
   ctx.fillStyle = 'rgba(210,222,245,0.05)';
   ctx.fillRect(x0, -4, g.w, g.mouthY + 4);
   ctx.strokeStyle = 'rgba(210,222,245,0.28)';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(x0, -4);           ctx.lineTo(x0, g.mouthY);
-  ctx.moveTo(x0 + g.w, -4);     ctx.lineTo(x0 + g.w, g.mouthY);
+  ctx.moveTo(x0, -4);         ctx.lineTo(x0, g.mouthY);
+  ctx.moveTo(x0 + g.w, -4);   ctx.lineTo(x0 + g.w, g.mouthY);
   ctx.stroke();
 
-  // collar around the opening
   const cw = g.w + 16, ch = 10;
   roundedRectPath(g.x - cw/2, g.mouthY - 2, cw, ch, 4);
   ctx.fillStyle = 'rgba(210,222,245,0.12)';
@@ -373,13 +403,11 @@ function drawTube(){
 function addParticle(cat){
   if (ended) return;
 
-  // every ball orbits on its own randomly tilted plane
   const axis = randomUnitVector();
   const helper = Math.abs(axis[2]) < 0.9 ? [0,0,1] : [1,0,0];
   const u = normalize(cross(axis, helper));
   const v = cross(axis, u);
 
-  // where it starts: inside the tube if there is one, otherwise just above the screen
   let lx, ly;
   if (settings.tube){
     const g = tubeGeom();
@@ -390,8 +418,6 @@ function addParticle(cat){
     ly = -40;
   }
 
-  // orbitK: orbit size as a fraction of the cloud radius
-  // Category 1 (isolation/distant) is placed further away (1.45 to 1.95) than categories 2-4 (0.25 to 0.85)
   const orbitK = (cat === 1) ? (1.45 + Math.random()*0.50) : (0.25 + Math.random()*0.60);
 
   const p = {
@@ -410,13 +436,10 @@ function addParticle(cat){
     born: performance.now(),
     lx, ly,
     trail: [],
-    // colour pulse state: 0 = fully grey, 1 = true colour
     reveal: 0,
     pulseStart: -1, pulseDur: 0, pulsePeak: 0, nextPulse: null,
   };
 
-  // unit-size orbit ellipse; scaled by the live cloud radius each frame
-  // so the cloud-size slider can resize existing orbits
   p.ringUnit = [];
   const RING_STEPS = 64;
   for (let i=0;i<=RING_STEPS;i++){
@@ -434,7 +457,6 @@ function addParticle(cat){
   lastCategory = cat;
   updateReadout();
 
-  // --- SYNC TO TAKE A BEET INDEX ---//
   const currentPayload = { responseCount, categoryCounts };
   localStorage.setItem('take_a_beet_data', JSON.stringify(currentPayload));
   if ('BroadcastChannel' in window) {
@@ -467,7 +489,7 @@ function buildHexCluster(container, total, filledN, color){
 }
 
 function showFinish(){
-  if (!ended) return;   // results target was raised again before this fired
+  if (!ended) return;
   const total = responseCount;
   const topCat = lastCategory || 3;
   const proportion = categoryCounts[topCat] / total;
@@ -487,6 +509,13 @@ function resetAll(){
   categoryCounts = {1:0,2:0,3:0,4:0};
   lastCategory = null;
   updateReadout();
+  
+  const resetPayload = { responseCount: 0, categoryCounts: {1:0,2:0,3:0,4:0} };
+  localStorage.setItem('take_a_beet_data', JSON.stringify(resetPayload));
+  if ('BroadcastChannel' in window) {
+      new BroadcastChannel('take_a_beet_channel').postMessage(resetPayload);
+  }
+
   document.getElementById('finish').classList.remove('show');
 }
 
@@ -545,7 +574,6 @@ document.getElementById('linesToggle').addEventListener('change', (e) => {
   }
 });
 
-// one colour picker per vote option
 (function buildSwatches(){
   const wrap = document.getElementById('swatches');
   for (const k of [1,2,3,4]){
@@ -557,7 +585,8 @@ document.getElementById('linesToggle').addEventListener('change', (e) => {
     input.addEventListener('input', (e) => {
       CAT_COLORS[k] = e.target.value;
       const rgb = hexToRgb(CAT_COLORS[k]);
-      for (const p of particles) if (p.cat === k) p.rgb = rgb;   // recolour balls already in the cloud
+      for (const p of particles) if (p.cat === k) p.rgb = rgb;
+      updateKeyBadgeColors(); // Update overlay badges live
     });
     const cap = document.createElement('span');
     cap.textContent = String(k);
@@ -565,9 +594,9 @@ document.getElementById('linesToggle').addEventListener('change', (e) => {
     label.appendChild(cap);
     wrap.appendChild(label);
   }
+  updateKeyBadgeColors(); // Set initial badge colors on load
 })();
 
-// ---------- drawing a ball (matte: flat colour, glow only while pulsing) ----------
 function drawBall(x, y, R, rgb, alpha, glow){
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -582,7 +611,7 @@ function drawBall(x, y, R, rgb, alpha, glow){
 function updatePulse(p, t, age){
   if (age <= FALL_MS){ p.reveal = 0; return; }
 
-  if (p.nextPulse === null) p.nextPulse = t + 300 + Math.random()*2200; // first pulse soon after landing
+  if (p.nextPulse === null) p.nextPulse = t + 300 + Math.random()*2200;
 
   if (p.pulseStart < 0 && t >= p.nextPulse){
     p.pulseStart = t;
@@ -596,7 +625,6 @@ function updatePulse(p, t, age){
       p.pulseStart = -1;
       p.nextPulse = t + 1200 + Math.random()*5500;
     } else {
-      // quick-ish swell, slow fade: reads as liquid rather than a blink
       p.reveal = p.pulsePeak * Math.pow(Math.sin(Math.PI * Math.pow(x, 0.75)), 2);
     }
   } else {
@@ -617,7 +645,7 @@ function drawParticles(t){
     const z3 = orbitR * (Math.cos(angle)*p.u[2] + Math.sin(angle)*p.v[2]);
 
     let sx = cx + x3;
-    let sy = cy + y3*0.62 + Math.sin(simTime*p.bobSpeed + p.bobPhase) * p.bobAmp; // gentle float
+    let sy = cy + y3*0.62 + Math.sin(simTime*p.bobSpeed + p.bobPhase) * p.bobAmp;
 
     if (age < FALL_MS){
       const k = easeInOutQuad(clamp01(age / FALL_MS));
@@ -642,10 +670,8 @@ function drawParticles(t){
     const R = p.baseR * scale * settings.size;
     const alpha = lerp(0.5, 1.0, o.depth);
 
-    // what colour the ball is showing right now: grey, swelling to its true colour
     const rgb = mixRgb(GREY_RGB, p.rgb, p.reveal);
 
-    // orbit ring — fades in after landing, brightens with the pulse
     const ringFade = clamp01((o.age - FALL_MS) / 800);
     if (ringFade > 0){
       const baseR = cloudRadius * p.orbitK;
@@ -662,7 +688,6 @@ function drawParticles(t){
       ctx.globalAlpha = 1;
     }
 
-    // short trail behind the ball, in its current (possibly grey) colour
     const trail = p.trail;
     if (trail.length > 1){
       for (let i=1;i<trail.length;i++){
@@ -684,7 +709,7 @@ function drawParticles(t){
   }
 }
 
-// ---------- passing lines (off by default; toggled in settings) ----------
+// ---------- passing lines ----------
 let walkers = [];
 const AVOID_R_FACTOR = 1.7;
 const FADE_MS = 8000;
@@ -812,7 +837,7 @@ function frame(t){
 }
 requestAnimationFrame(frame);
 
-// ---------- USB Arduino input (Chrome / Edge Web Serial) ----------
+// ---------- USB Arduino Input (Web Serial) ----------
 const connectArduinoButton = document.getElementById('connectArduino');
 const arduinoStatus = document.getElementById('arduinoStatus');
 let arduinoPort = null;
@@ -821,8 +846,8 @@ let arduinoConnected = false;
 
 function processArduinoLine(line) {
   const match = /^VOTE:([1-4])$/.exec(line.trim());
-  if (!match) return; // ignore READY, diagnostics, or malformed messages
-  addParticle(Number(match[1])); // same action as pressing keys 1-4
+  if (!match) return;
+  addParticle(Number(match[1]));
 }
 
 async function readArduino(port) {
@@ -837,11 +862,10 @@ async function readArduino(port) {
           const {value, done} = await reader.read();
           if (done) break;
           buffer += decoder.decode(value, {stream:true});
-          // Keep incomplete lines between USB packets.
           const lines = buffer.split(/\r?\n/);
           buffer = lines.pop();
           for (const line of lines) processArduinoLine(line);
-          if (buffer.length > 256) buffer = ''; // bound malformed input
+          if (buffer.length > 256) buffer = '';
         }
       } finally {
         reader.releaseLock();
@@ -876,7 +900,6 @@ connectArduinoButton.addEventListener('click', async () => {
     arduinoConnected = true;
     connectArduinoButton.textContent = 'Arduino connected';
     arduinoStatus.textContent = 'Connected';
-    // Opening a serial port may reset the Uno; its startup READY line is ignored.
     void readArduino(port);
   } catch (error) {
     console.error('Could not connect Arduino:', error);
@@ -885,9 +908,8 @@ connectArduinoButton.addEventListener('click', async () => {
   }
 });
 
-// ---------- input (1–4 stands in for the four physical vote buttons) ----------
+// ---------- Keyboard Controls ----------
 window.addEventListener('keydown', (e) => {
-  // don't treat typing in the settings fields as votes
   const tgt = e.target;
   if (tgt && (tgt.tagName === 'TEXTAREA' || (tgt.tagName === 'INPUT' && (tgt.type === 'text' || tgt.type === 'number')))) return;
 

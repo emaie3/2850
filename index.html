@@ -5,14 +5,14 @@ Prompts Used:
 1. create a simple HTML webstie around the topic of youth isolation linking these three websites (https://www.beyondblue.org.au/mental-health/loneliness, https://www.brisbanecitypsychologist.com.au/how-to-gently-cope-with-loneliness/, https://www.ruok.org.au/ending-loneliness-together)
 2. this page is linked to a project i am working on and we want to display some data we collect about the amount of lonely people in a specifoc area where we deploy the project, add a section at the start with placeholder values to show this.
 3. add a random message generator so that one of ten randomly generated messages is given to the user. 
-4. connect live metrics from the canvas prototype with visual colored person icons representing each vote category.
+4. connect live metrics from the canvas prototype with visual colored person icons representing all four categories individually.
 
 Edits Made:
 - Titles and Content edited to contain correct information/information relavent to our project that is accurate
 - Layout to be more refined and add a part that intorduces the project
 - Small edits to the CSS to change the colour scheme and appearance
 - Changed the random messages to be evidence based
-- Added dynamic person icon grid for real time live data tracking from external collage prototype
+- Updated the person icon grid so all four distinct response categories (1, 2, 3, 4) have their own individual colors
 -->
 
 <!DOCTYPE html>
@@ -66,39 +66,28 @@ Edits Made:
                 </span>
             </div>
 
-            <!-- Visual Crowd Grid (Colored People Icons) -->
+            <!-- ACTIVE QUESTION BOX -->
+            <div class="bg-[#E3DCDD] p-4 rounded-xl border border-[#851D3E]/20 mb-4 shadow-inner">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-[#851D3E] mb-1">Active Question</p>
+                <p id="active-question-display" class="text-sm sm:text-base font-semibold text-[#2D121B] italic">
+                    How often do you feel isolated?
+                </p>
+            </div>
+
+            <!-- Visual Crowd Grid (Colored People Icons for all 4 Categories) -->
             <div class="bg-[#E3DCDD]/60 p-4 rounded-xl border border-[#659C75]/20">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-bold text-[#5A3F47] uppercase tracking-wider">Current Responses</span>
-                    <div class="flex items-center gap-3 text-[10px] font-semibold text-[#5A3F47]">
-                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#851D3E] inline-block"></span> Isolated</span>
-                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#659C75] inline-block"></span> Fully Connected</span>
-                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#8a8a91] inline-block"></span> Other</span>
+                    <div class="flex flex-wrap items-center gap-2.5 text-[10px] font-semibold text-[#5A3F47]">
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#851D3E] inline-block"></span> Often</span>
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#8a8a91] inline-block"></span> Sometimes</span>
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#b8b8b8] inline-block"></span> Rarely</span>
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#659C75] inline-block"></span> Never</span>
                     </div>
                 </div>
                 <!-- Container where person icons are dynamically rendered -->
                 <div id="person-grid" class="flex flex-wrap gap-1.5 min-h-[44px] max-h-36 overflow-y-auto p-1 items-center">
                     <p class="text-xs text-[#5A3F47] italic w-full text-center py-2">Waiting for live votes from installation...</p>
-                </div>
-            </div>
-
-            <!-- Stats Grid -->
-             <br>
-            <div class="grid grid-cols-2 sm:grid-cols-2 gap-3 mb-4">
-                <!-- Stat 1: Isolated People -->
-                <div class="bg-[#E3DCDD] p-3.5 rounded-xl border border-[#659C75]/20">
-                    <p class="text-xs text-[#5A3F47] font-semibold">Number of Isolated People</p>
-                    <p id="stat-isolated" class="text-xl font-extrabold text-[#851D3E] mt-0.5">
-                        0/0
-                    </p>
-                </div>
-
-                <!-- Stat 2: Connectedness -->
-                <div class="bg-[#E3DCDD] p-3.5 rounded-xl border border-[#659C75]/20">
-                    <p class="text-xs text-[#5A3F47] font-semibold">Level of Connectedness</p>
-                    <p id="stat-connectedness" class="text-xl font-extrabold text-[#659C75] mt-0.5">
-                        0%
-                    </p>
                 </div>
             </div>
         </section>
@@ -109,9 +98,6 @@ Edits Made:
                 <h2 class="text-lg font-bold text-[#851D3E] flex items-center gap-2">
                     <span></span> Daily Encourage-Beet
                 </h2>
-                <span class="text-xs font-medium text-[#5A3F47] bg-[#851D3E]/10 px-2.5 py-1 rounded-full">
-                    A note for you
-                </span>
             </div>
 
             <!-- Message Card Display -->
@@ -207,7 +193,6 @@ Edits Made:
 
     <!-- JavaScript Logic -->
     <script>
-        // Array containing 10 supportive and encouraging messages
         const messages = [
             "Loneliness can feel overwhelming, but remember that your feelings are valid.", 
             "You are not alone in this. People care about you deeply and want to support you through this difficult time.",
@@ -225,22 +210,19 @@ Edits Made:
 
         function generateNewMessage() {
             const messageElement = document.getElementById('random-message');
-            
             let newIndex;
             do {
                 newIndex = Math.floor(Math.random() * messages.length);
             } while (newIndex === currentIndex && messages.length > 1);
-            
             currentIndex = newIndex;
 
             messageElement.classList.remove('animate-fade-in');
-            void messageElement.offsetWidth; // Trigger reflow
-            
+            void messageElement.offsetWidth;
             messageElement.textContent = messages[currentIndex];
             messageElement.classList.add('animate-fade-in');
         }
 
-        // --- LIVE DATA & COLORED PEOPLE SYNC LOGIC ---
+        // --- LIVE DATA & 4-CATEGORY COLORED ICONS LOGIC ---
         function updateLiveData(data) {
             if (!data) return;
             const isolatedElem = document.getElementById('stat-isolated');
@@ -257,7 +239,7 @@ Edits Made:
             if (isolatedElem) isolatedElem.textContent = `${isolatedCount}/${total}`;
             if (connectedElem) connectedElem.textContent = `${connectedPercentage}%`;
 
-            // Render visual colored people icons
+            // Render visual colored people icons broken down by all 4 distinct categories
             if (personGrid) {
                 if (total === 0) {
                     personGrid.innerHTML = `<p class="text-xs text-[#5A3F47] italic w-full text-center py-2">Waiting for live votes from installation...</p>`;
@@ -266,7 +248,6 @@ Edits Made:
 
                 personGrid.innerHTML = '';
                 
-                // Helper to append person SVG icons with specific colors
                 const addIcons = (count, colorClass) => {
                     for (let i = 0; i < count; i++) {
                         const iconSpan = document.createElement('span');
@@ -276,12 +257,14 @@ Edits Made:
                     }
                 };
 
-                // Category 1 = Isolated (Red #851D3E)
+                // Category 1: Isolated (Red)
                 addIcons(catCounts[1] || 0, 'text-[#851D3E]');
-                // Category 4 = Connected (Green #659C75)
+                // Category 2: Unsettled (Grey)
+                addIcons(catCounts[2] || 0, 'text-[#8a8a91]');
+                // Category 3: Hopeful (Light Neutral)
+                addIcons(catCounts[3] || 0, 'text-[#b8b8b8]');
+                // Category 4: Connected (Green)
                 addIcons(catCounts[4] || 0, 'text-[#659C75]');
-                // Category 2 and 3 = Other / Unsettled (Grey #8a8a91)
-                addIcons((catCounts[3] || 0) + (catCounts[2] || 0), 'text-[#8a8a91]');
             }
         }
 
@@ -294,14 +277,12 @@ Edits Made:
             } catch(e) { console.error("Could not load stored stats", e); }
         }
 
-        // Listen for updates across tabs / windows
         window.addEventListener('storage', (e) => {
             if (e.key === 'take_a_beet_data' && e.newValue) {
                 updateLiveData(JSON.parse(e.newValue));
             }
         });
 
-        // BroadcastChannel fallback for instant multi-window sync
         if ('BroadcastChannel' in window) {
             const channel = new BroadcastChannel('take_a_beet_channel');
             channel.onmessage = (event) => {
@@ -309,12 +290,10 @@ Edits Made:
             };
         }
 
-        // Initial setup on load
         window.addEventListener('DOMContentLoaded', () => {
             generateNewMessage();
             loadSavedData();
         });
     </script>
-
 </body>
 </html>
