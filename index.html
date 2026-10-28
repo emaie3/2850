@@ -225,19 +225,15 @@ Edits Made:
         // --- LIVE DATA & 4-CATEGORY COLORED ICONS LOGIC ---
         function updateLiveData(data) {
             if (!data) return;
-            const isolatedElem = document.getElementById('stat-isolated');
-            const connectedElem = document.getElementById('stat-connectedness');
             const personGrid = document.getElementById('person-grid');
             
             const total = data.responseCount || 0;
             const catCounts = data.categoryCounts || {1:0, 2:0, 3:0, 4:0};
-            
-            const isolatedCount = catCounts[1] || 0;
-            const connectedCount = catCounts[4] || 0;
-            const connectedPercentage = total > 0 ? Math.round((connectedCount / total) * 100) : 0;
 
-            if (isolatedElem) isolatedElem.textContent = `${isolatedCount}/${total}`;
-            if (connectedElem) connectedElem.textContent = `${connectedPercentage}%`;
+            if (data.question) {
+                const qElem = document.getElementById('active-question-display');
+                if (qElem) qElem.textContent = data.question;
+            }
 
             // Render visual colored people icons broken down by all 4 distinct categories
             if (personGrid) {
@@ -257,42 +253,51 @@ Edits Made:
                     }
                 };
 
-                // Category 1: Isolated (Red)
-                addIcons(catCounts[1] || 0, 'text-[#851D3E]');
-                // Category 2: Unsettled (Grey)
-                addIcons(catCounts[2] || 0, 'text-[#8a8a91]');
-                // Category 3: Hopeful (Light Neutral)
-                addIcons(catCounts[3] || 0, 'text-[#b8b8b8]');
-                // Category 4: Connected (Green)
+                // Category 1: Often (Red)
+                addIcons(catCounts[1] || 0, 'text-[#75273D]');
+                // Category 2: Sometimes (Blue)
+                addIcons(catCounts[2] || 0, 'text-[#7C99F7]');
+                // Category 3: Rarely (Yellow)
+                addIcons(catCounts[3] || 0, 'text-[#EDE698]');
+                // Category 4: Never (Green)
                 addIcons(catCounts[4] || 0, 'text-[#659C75]');
             }
         }
 
-        function loadSavedData() {
-            try {
-                const stored = localStorage.getItem('take_a_beet_data');
-                if (stored) {
-                    updateLiveData(JSON.parse(stored));
-                }
-            } catch(e) { console.error("Could not load stored stats", e); }
-        }
-
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'take_a_beet_data' && e.newValue) {
-                updateLiveData(JSON.parse(e.newValue));
-            }
-        });
-
-        if ('BroadcastChannel' in window) {
-            const channel = new BroadcastChannel('take_a_beet_channel');
-            channel.onmessage = (event) => {
-                if (event.data) updateLiveData(event.data);
-            };
-        }
-
         window.addEventListener('DOMContentLoaded', () => {
             generateNewMessage();
-            loadSavedData();
+        });
+    </script>
+
+    <!-- SECURE MQTT CLIENT FOR REAL-TIME SYNC -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+    <script>
+        const clientId = "take_a_beet_mobile_" + Math.random().toString(36).substring(7);
+        // Corrected to port 8884 with "/mqtt" path for secure HTTPS/mobile browser compatibility
+        const client = new Paho.MQTT.Client("broker.hivemq.com", 8884, "/mqtt", clientId);
+
+        client.onConnectionLost = function (responseObject) {
+            console.log("Connection lost: " + responseObject.errorMessage);
+        };
+
+        client.onMessageArrived = function (message) {
+            try {
+                const data = JSON.parse(message.payloadString);
+                updateLiveData(data);
+            } catch (e) {
+                console.error("Error parsing message", e);
+            }
+        };
+
+        client.connect({
+            useSSL: true, // Required for mobile browsers over HTTPS
+            onSuccess: function () {
+                console.log("Connected to live sync broker securely!");
+                client.subscribe("takeabeet/live/session");
+            },
+            onFailure: function (message) {
+                console.log("Connection failed: " + message.errorMessage);
+            }
         });
     </script>
 </body>
