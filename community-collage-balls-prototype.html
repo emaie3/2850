@@ -1,310 +1,406 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Community Collage — Ball Prototype</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;1,9..144,400&display=swap');
+	<head>
+		<meta charset="UTF-8">
+			<title>Community Collage — Ball Prototype</title>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<style>
+					@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;1,9..144,400&display=swap');
 
-  :root{
-    --void: #05070d;
-    --mist: rgba(210, 222, 245, 0.62);
-    --mist-dim: rgba(210, 222, 245, 0.30);
-    --line: rgba(140, 165, 210, 0.16);
-  }
+					:root{
+					--void: #05070d;
+					--mist: rgba(210, 222, 245, 0.62);
+					--mist-dim: rgba(210, 222, 245, 0.30);
+					--line: rgba(140, 165, 210, 0.16);
+					}
 
-  * { box-sizing: border-box; }
+					* { box-sizing: border-box; }
 
-  html, body {
-    margin: 0; padding: 0; width: 100%; height: 100%;
-    background: var(--void);
-    overflow: hidden;
-    font-family: 'Space Grotesk', sans-serif;
-  }
+					html, body {
+					margin: 0; padding: 0; width: 100%; height: 100%;
+					background: var(--void);
+					overflow: hidden;
+					font-family: 'Space Grotesk', sans-serif;
+					}
 
-  #stage { position: fixed; inset: 0; display: block; }
+					#stage { position: fixed; inset: 0; display: block; }
 
-  .veil {
-    position: fixed; inset: 0; pointer-events: none;
-    background: radial-gradient(ellipse 80% 60% at 50% 48%, transparent 40%, rgba(5,7,13,0.55) 100%);
-  }
+					.veil {
+					position: fixed; inset: 0; pointer-events: none;
+					background: radial-gradient(ellipse 80% 60% at 50% 48%, transparent 40%, rgba(5,7,13,0.55) 100%);
+					}
 
-  /* sits below the dropper tube */
-  .prompt {
-    position: fixed; top: max(86px, 11%); left: 50%; transform: translateX(-50%);
-    text-align: center; width: min(560px, 86vw); pointer-events: none;
-  }
-  .prompt .eyebrow { font-size: 12.5px; letter-spacing: 0.02em; color: var(--mist-dim); margin: 0 0 10px; }
-  .prompt h1 {
-    font-family: 'Fraunces', serif; font-weight: 300; font-style: italic;
-    font-size: clamp(22px, 3.4vw, 32px); line-height: 1.35;
-    color: white; margin: 0;
-  }
+					/* sits below the dropper tube */
+					.prompt {
+					position: fixed; top: max(86px, 11%); left: 50%; transform: translateX(-50%);
+					text-align: center; width: min(560px, 86vw); pointer-events: none;
+					transition: opacity 0.9s ease;
+					}
+					.prompt h1 {
+					font-family: 'Fraunces', serif; font-weight: 300; font-style: italic;
+					font-size: calc(clamp(22px, 3.4vw, 32px) * var(--qs, 1)); line-height: 1.35;
+					color: white; margin: 0;
+					}
 
-  .footer-readout {
-    position: fixed; top: 100px;left: 50%; transform: translateX(-50%);
-    font-size: 16px; color: white; letter-spacing: 0.01em;
-  }
+					.footer-readout {
+					position: fixed; top: 100px;left: 50%; transform: translateX(-50%);
+					font-size: 16px; color: white; letter-spacing: 0.01em;
+					}
 
-  .qr {
-    position: fixed; bottom: 45px; right: 45px; width: 10px; height: 10px;
-    border: 1px solid var(--line); border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 9.5px; color: var(--mist-dim); letter-spacing: 0.03em;
-    text-align: center; line-height: 1.3;
-  }
+					.qr {
+					position: fixed; bottom: 45px; right: 45px; width: 10px; height: 10px;
+					border: 1px solid var(--line); border-radius: 8px;
+					display: flex; align-items: center; justify-content: center;
+					font-size: 9.5px; color: var(--mist-dim); letter-spacing: 0.03em;
+					text-align: center; line-height: 1.3;
+					}
 
-  .qr img{
-    width: 100px;
-    height: 100px;
-  }
+					.qr img{
+					width: 100px;
+					height: 100px;
+					}
 
-  .demo-hint {
-    position: fixed; bottom: 16px; left: 16px;
-    font-size: 10px; letter-spacing: 0.02em;
-    color: rgba(210,222,245,0.18);
-    font-family: 'Space Grotesk', monospace;
-  }
+					.demo-hint {
+					position: fixed; bottom: 16px; left: 16px;
+					font-size: 10px; letter-spacing: 0.02em;
+					color: rgba(210,222,245,0.18);
+					font-family: 'Space Grotesk', monospace;
+					}
 
-  /* ---------- KEY MAPPING OVERLAY ---------- */
-  .key-mapping {
-    position: fixed; bottom: 18px; right: 28%; z-index: 10;
-    display: flex; gap: 8px; background: rgba(10,14,24,0.75);
-    padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line);
-    backdrop-filter: blur(8px);
-  }
-  .key-chip {
-    display: flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(210,222,245,0.85);
-  }
-  .key-badge {
-    width: 20px; height: 20px; border-radius: 5px; font-weight: 600; font-size: 10px;
-    display: flex; align-items: center; justify-content: center; color: white;
-    transition: background-color 0.3s ease;
-  }
+					/* ---------- KEY MAPPING OVERLAY ---------- */
+					.key-mapping {
+					position: fixed; bottom: 18px; right: 28%; z-index: 10;
+					display: flex; gap: 8px; background: rgba(10,14,24,0.75);
+					padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line);
+					backdrop-filter: blur(8px);
+					transition: opacity 0.9s ease;
+					}
+					.key-chip {
+					display: flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(210,222,245,0.85);
+					}
+					.key-badge {
+					width: 20px; height: 20px; border-radius: 5px; font-weight: 600; font-size: 10px;
+					display: flex; align-items: center; justify-content: center; color: white;
+					transition: background-color 0.3s ease;
+					}
 
-  .reveal {
-    position: fixed; top: 40%; left: 50%; transform: translateX(-50%) translateY(8px);
-    text-align: center; width: min(600px, 88vw);
-    font-family: 'Fraunces', serif; font-style: italic; font-weight: 300;
-    font-size: clamp(20px, 3vw, 30px);
-    color: rgba(242, 220, 200, 0.95);
-    opacity: 0; pointer-events: none;
-    transition: opacity 1.1s ease, transform 1.1s ease;
-  }
-  .reveal.show { opacity: 1; transform: translateX(-50%) translateY(0px); }
+					/* while the results are showing, the live-question UI steps aside */
+					body.finished .prompt,
+					body.finished .key-mapping { opacity: 0; pointer-events: none; }
 
-  /* ---------- settings (top right) ---------- */
-  .settings {
-    position: fixed; top: 18px; right: 22px; z-index: 10;
-    display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
-  }
-  .gear {
-    width: 34px; height: 34px; border-radius: 50%;
-    border: 1px solid var(--line); background: rgba(255,255,255,0.03);
-    color: var(--mist); cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    opacity: 0.5; transition: opacity 0.2s ease, border-color 0.2s ease;
-    padding: 0;
-  }
-  .gear:hover, .gear.active { opacity: 1; border-color: rgba(210,222,245,0.4); }
-  .panel {
-    display: none; width: 240px; padding: 14px 16px 16px;
-    max-height: calc(100vh - 80px); overflow-y: auto;
-    border: 1px solid var(--line); border-radius: 12px;
-    background: rgba(10,14,24,0.9);
-    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-    flex-direction: column; gap: 14px;
-    font-size: 11.5px; color: var(--mist);
-  }
-  .panel.open { display: flex; }
-  .panel .row-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-  .panel .val { color: var(--mist-dim); font-variant-numeric: tabular-nums; }
-  .panel input[type=range] { width: 100%; accent-color: #c9d2e6; margin: 0; }
-  .panel .check { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
-  .panel input[type=checkbox] { accent-color: #c9d2e6; width: 15px; height: 15px; margin: 0; cursor: pointer; }
-  .panel textarea, .panel input[type=number] {
-    width: 100%; background: rgba(255,255,255,0.05);
-    border: 1px solid var(--line); border-radius: 6px;
-    padding: 7px 9px; color: rgba(235,240,250,0.92);
-    font-family: inherit; font-size: 12px; outline: none; resize: none;
-  }
-  .panel textarea:focus, .panel input[type=number]:focus { border-color: rgba(210,222,245,0.4); }
-  .panel input[type=number] { width: 84px; }
-  .swatches { display: flex; gap: 10px; }
-  .swatch { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--mist-dim); font-size: 10px; }
-  .swatch input[type=color] {
-    width: 38px; height: 28px; padding: 0; cursor: pointer;
-    border: 1px solid var(--line); border-radius: 6px; background: none;
-  }
+					/* ---------- settings (top right) ---------- */
+					.settings {
+					position: fixed; top: 18px; right: 22px; z-index: 20;
+					display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+					}
+					.gear {
+					width: 34px; height: 34px; border-radius: 50%;
+					border: 1px solid var(--line); background: rgba(255,255,255,0.03);
+					color: var(--mist); cursor: pointer;
+					display: flex; align-items: center; justify-content: center;
+					opacity: 0.5; transition: opacity 0.2s ease, border-color 0.2s ease;
+					padding: 0;
+					}
+					.gear:hover, .gear.active { opacity: 1; border-color: rgba(210,222,245,0.4); }
+					.panel {
+					display: none; width: 280px; padding: 14px 16px 16px;
+					max-height: calc(100vh - 80px); overflow-y: auto;
+					border: 1px solid var(--line); border-radius: 12px;
+					background: rgba(10,14,24,0.9);
+					-webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+					flex-direction: column; gap: 14px;
+					font-size: 11.5px; color: var(--mist);
+					}
+					.panel.open { display: flex; }
+					.panel .row-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+					.panel .val { color: var(--mist-dim); font-variant-numeric: tabular-nums; }
+					.panel input[type=range] { width: 100%; accent-color: #c9d2e6; margin: 0; }
+					.panel .check { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+					.panel input[type=checkbox] { accent-color: #c9d2e6; width: 15px; height: 15px; margin: 0; cursor: pointer; }
+					.panel textarea, .panel input[type=number] {
+					width: 100%; background: rgba(255,255,255,0.05);
+					border: 1px solid var(--line); border-radius: 6px;
+					padding: 7px 9px; color: rgba(235,240,250,0.92);
+					font-family: inherit; font-size: 12px; outline: none; resize: none;
+					}
+					.panel textarea:focus, .panel input[type=number]:focus { border-color: rgba(210,222,245,0.4); }
+					.panel input[type=number] { width: 84px; }
+					.swatches { display: flex; gap: 10px; }
+					.swatch { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--mist-dim); font-size: 10px; }
+					.swatch input[type=color] {
+					width: 38px; height: 28px; padding: 0; cursor: pointer;
+					border: 1px solid var(--line); border-radius: 6px; background: none;
+					}
 
-  /* ---------- finishing screen ---------- */
-  .finish {
-    position: fixed; inset: 0;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 26px; opacity: 0; pointer-events: none; transition: opacity 1.4s ease;
-    text-align: center; padding: 0 24px;
-  }
-  .finish.show { opacity: 1; pointer-events: auto; }
-  .finish .eyebrow { font-size: 12.5px; letter-spacing: 0.05em; color: var(--mist-dim); text-transform: uppercase; }
-  .finish h1 {
-    font-family: 'Fraunces', serif; font-weight: 300; font-style: italic;
-    font-size: clamp(24px, 4vw, 40px); color: rgba(240,235,250,0.95); margin: 0; max-width: 720px;
-  }
-  .hex-stat { display: flex; align-items: center; gap: 22px; }
-  .hex-cluster { position: relative; width: 130px; height: 130px; flex: none; }
-  .hexcell {
-    position: absolute; width: 40px; height: 46px;
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-    background: rgba(255,255,255,0.04); border: 1px solid rgba(210,222,245,0.22);
-    transition: background 0.6s ease, border-color 0.6s ease;
-  }
-  .hexcell.filled { border-color: transparent; }
-  .hex-stat p { font-size: 15px; line-height: 1.6; color: rgba(225,232,248,0.82); max-width: 320px; text-align: left; margin: 0; }
-  .finish .closing {
-    font-family: 'Fraunces', serif; font-style: italic; font-weight: 300;
-    font-size: clamp(16px, 2vw, 20px); color: rgba(225,232,248,0.7); max-width: 560px;
-  }
-  .finish .cta {
-    font-size: 13.5px; letter-spacing: 0.03em; color: rgba(242,200,165,0.9);
-    border: 1px solid rgba(242,200,165,0.3); border-radius: 24px; padding: 12px 26px; margin-top: 4px;
-  }
-  .finish .restart-hint { position: absolute; bottom: 26px; font-size: 11px; color: var(--mist-dim); }
-  .arduino-connect { position:fixed; left:16px; bottom:38px; z-index:20; display:flex; align-items:center; gap:9px; font:11px 'Space Grotesk',sans-serif; color:rgba(210,222,245,.65); }
-  .arduino-connect button { background:rgba(20,28,45,.9); border:1px solid rgba(140,165,210,.4); border-radius:7px; padding:8px 12px; color:#e3e9f5; cursor:pointer; font:inherit; }
-  .arduino-connect button:hover { background:rgba(40,55,80,.9); }
-  .arduino-connect button:disabled { opacity:.55; cursor:default; }
-</style>
-</head>
-<body>
+					/* ---------- results screen ----------
+					Sits in its own column on the right while the cloud glides to the left,
+					so the two never overlap. On tall/portrait screens it stacks instead. */
+					.finish {
+					position: fixed; top: 64px; bottom: 130px; right: 5vw; width: min(500px, 44vw);
+					display: flex; flex-direction: column;
+					overflow-y: auto; scrollbar-width: none;
+					opacity: 0; pointer-events: none;
+					transition: opacity 1.2s ease 0.5s;
+					text-align: left;
+					}
+					.finish::-webkit-scrollbar { display: none; }
+					.finish.show { opacity: 1; pointer-events: auto; }
+					.finish-inner { margin: auto 0; display: flex; flex-direction: column; gap: 14px; }
+					@media (max-aspect-ratio: 21/20) {
+					.finish { top: 52%; bottom: 125px; left: 7vw; right: 7vw; width: auto; }
+					}
 
-<canvas id="stage"></canvas>
-<div class="veil"></div>
+					.finish .eyebrow { font-size: 12px; letter-spacing: 0.08em; color: var(--mist-dim); text-transform: uppercase; margin: 0; }
+					.finish h1 {
+					font-family: 'Fraunces', serif; font-weight: 300; font-style: italic;
+					font-size: clamp(26px, 3.2vw, 38px); line-height: 1.15;
+					color: rgba(240,235,250,0.96); margin: 0;
+					}
+					.finish .finish-question { font-size: 13.5px; line-height: 1.5; color: var(--mist); margin: 0; }
 
-<!-- Key Mapping Overlay with ID badges for live color sync -->
-<div class="key-mapping">
-  <div class="key-chip"><span id="badge-1" class="key-badge" style="background:#851D3E;"></span> I often feel this way</div>
-  <div class="key-chip"><span id="badge-2" class="key-badge" style="background:#E3DCDD; color:#2D121B;"></span> I sometimes feel this way</div>
-  <div class="key-chip"><span id="badge-3" class="key-badge" style="background:#FFFFFF; color:#2D121B;"></span> I rarely feel this way</div>
-  <div class="key-chip"><span id="badge-4" class="key-badge" style="background:#659C75;"></span> I never feel this way</div>
-</div>
+					.results { display: flex; flex-direction: column; gap: 12px; margin: 6px 0 2px; }
+					.res-head { display: flex; align-items: center; gap: 10px; font-size: 14px; color: rgba(225,232,248,0.9); margin-bottom: 6px; }
+					.res-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+					.res-label { flex: 1; }
+					.res-val { font-variant-numeric: tabular-nums; color: var(--mist); }
+					.res-track { height: 6px; border-radius: 4px; background: rgba(255,255,255,0.07); overflow: hidden; }
+					.res-fill { height: 100%; width: 0; border-radius: 4px; transition: width 1.3s cubic-bezier(.2,.7,.2,1); }
 
-<div class="prompt">
-  <h1 id="promptText">How often do you feel isolated?</h1>
-  <div class="footer-readout">
-    <span id="countReadout">0 of 75 responses</span>
-  </div> 
-</div>
+					.finish .insight { font-size: 14px; line-height: 1.55; color: rgba(225,232,248,0.82); margin: 0; }
+					.finish .closing {
+					font-family: 'Fraunces', serif; font-style: italic; font-weight: 300;
+					font-size: clamp(16px, 1.7vw, 19px); line-height: 1.45;
+					color: rgba(225,232,248,0.72); margin: 2px 0 0;
+					}
+					.finish .help {
+					border-left: 2px solid rgba(210,222,245,0.2); padding: 2px 0 2px 12px;
+					font-size: 12.5px; line-height: 1.6; color: var(--mist);
+					}
+					.finish .help strong { display: block; font-weight: 500; color: rgba(225,232,248,0.88); }
+					.finish .cta {
+					align-self: flex-start;
+					font-size: 13px; letter-spacing: 0.03em; color: rgba(242,200,165,0.92);
+					border: 1px solid rgba(242,200,165,0.32); border-radius: 24px; padding: 10px 22px;
+					}
+					.finish .restart-hint { font-size: 11px; color: var(--mist-dim); margin: 0; }
 
-<div class="settings">
-  <button class="gear" id="gear" aria-label="Settings" title="Settings">
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
-      <line x1="2" y1="4" x2="14" y2="4"/><circle cx="10" cy="4" r="1.7" fill="#05070d"/>
-      <line x1="2" y1="8" x2="14" y2="8"/><circle cx="5.5" cy="8" r="1.7" fill="#05070d"/>
-      <line x1="2" y1="12" x2="14" y2="12"/><circle cx="11" cy="12" r="1.7" fill="#05070d"/>
-    </svg>
-  </button>
-  <div class="panel" id="panel">
-    <div>
-      <div class="row-head"><span>Question</span></div>
-      <textarea id="questionInput" rows="3"></textarea>
-    </div>
-    <div>
-      <div class="row-head"><span>Results needed</span></div>
-      <input type="number" id="maxInput" min="1" max="500" step="1" value="75">
-    </div>
-    <div>
-      <div class="row-head"><span>Cloud size</span><span class="val" id="cloudVal">1.00×</span></div>
-      <input type="range" id="cloudRange" min="0.5" max="1.8" step="0.05" value="1">
-    </div>
-    <div>
-      <div class="row-head"><span>Ball size</span><span class="val" id="sizeVal">1.00×</span></div>
-      <input type="range" id="sizeRange" min="0.5" max="2" step="0.05" value="1">
-    </div>
-    <div>
-      <div class="row-head"><span>Speed</span><span class="val" id="speedVal">1.00×</span></div>
-      <input type="range" id="speedRange" min="0.2" max="3" step="0.05" value="1">
-    </div>
-    <div>
-      <div class="row-head"><span>Ball colours</span></div>
-      <div class="swatches" id="swatches"></div>
-    </div>
-    <label class="check"><span>Dropper tube</span><input type="checkbox" id="tubeToggle" checked></label>
-    <label class="check"><span>Passing lines</span><input type="checkbox" id="linesToggle"></label>
-  </div>
-</div>
+					.panel details { border-top: 1px solid var(--line); padding-top: 10px; }
+					.panel summary { cursor: pointer; font-weight: 500; color: rgba(225,232,248,0.85); list-style-position: inside; }
+					.panel .sec { display: flex; flex-direction: column; gap: 12px; padding-top: 12px; }
+					.panel .num-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+					.panel .num-row input[type=color] { width: 38px; height: 28px; padding: 0; cursor: pointer; border: 1px solid var(--line); border-radius: 6px; background: none; }
+					.panel .btn-row { display: flex; gap: 8px; }
+					.panel .btn-row button { flex: 1; background: rgba(20,28,45,.9); border: 1px solid rgba(140,165,210,.35); color: #e3e9f5; border-radius: 7px; padding: 8px 10px; font: inherit; cursor: pointer; }
+					.panel .btn-row button:hover { background: rgba(40,55,80,.9); }
+					.arduino-connect { position:fixed; left:16px; bottom:38px; z-index:20; display:flex; align-items:center; gap:9px; font:11px 'Space Grotesk',sans-serif; color:rgba(210,222,245,.65); }
+					.arduino-connect button { background:rgba(20,28,45,.9); border:1px solid rgba(140,165,210,.4); border-radius:7px; padding:8px 12px; color:#e3e9f5; cursor:pointer; font:inherit; }
+					.arduino-connect button:hover { background:rgba(40,55,80,.9); }
+					.arduino-connect button:disabled { opacity:.55; cursor:default; }
+				</style>
+			</head>
+	<body>
 
-<div class="qr"><img src="https_emaie3_github_io_2850_ (1).png"></div>
-<div class="demo-hint">1&ndash;4 test votes · R resets after finish</div>
+		<canvas id="stage"></canvas>
+		<div class="veil"></div>
 
-<div class="arduino-connect"><button id="connectArduino" type="button">Connect Arduino</button><span id="arduinoStatus" role="status">Not connected</span></div>
+		<!-- Key Mapping Overlay with ID badges for live color sync -->
+		<div class="key-mapping" id="keyLegend">
+			<div class="key-chip">
+				<span id="badge-1" class="key-badge" style="background:#75273D;"></span> I often feel this way
+			</div>
+			<div class="key-chip">
+				<span id="badge-2" class="key-badge" style="background:#7C99F7; color:#2D121B;"></span> I sometimes feel this way
+			</div>
+			<div class="key-chip">
+				<span id="badge-3" class="key-badge" style="background:#EDE698; color:#2D121B;"></span> I rarely feel this way
+			</div>
+			<div class="key-chip">
+				<span id="badge-4" class="key-badge" style="background:#659C75;"></span> I never feel this way
+			</div>
+		</div>
 
-<div class="finish" id="finish">
-  <p class="eyebrow">the cloud is full</p>
-  <h1 id="finishHeadline">75 people paused here.</h1>
-  <div class="hex-stat">
-    <div class="hex-cluster" id="clusterA"></div>
-    <p id="statA"></p>
-  </div>
-  <p class="closing">Loneliness rarely looks like being alone. Here, it looked like a room full of people, each quietly carrying the same feeling.</p>
-  <div class="cta">Say hello to someone near you before you go.</div>
-  <p class="restart-hint">press R to begin again</p>
-</div>
+		<div class="prompt">
+			<h1 id="promptText">How often do you feel isolated?</h1>
+			<div class="footer-readout" id="readoutBox">
+				<span id="countReadout">0 of 75 responses</span>
+			</div>
+		</div>
 
-<script>
-// =====================================================================
-// COLOURS — edit these four hexes to restyle the cloud
-// Key 1–4 on the keyboard (= the four physical buttons) map to 1–4 here.
-// =====================================================================
-const PALETTES = {
-  figma:    { 1: '#851D3E', 2: '#E3DCDD', 3: '#FFFFFF', 4: '#659C75' },
-  original: { 1: '#4770AE', 2: '#7A77A2', 3: '#B18986', 4: '#E89F63' },
-};
-const ACTIVE_PALETTE = 'figma';
-const CAT_COLORS = Object.assign({}, PALETTES[ACTIVE_PALETTE]);
+		<div class="settings">
+			<button class="gear" id="gear" aria-label="Settings" title="Settings">
+				<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
+					<line x1="2" y1="4" x2="14" y2="4"/>
+					<circle cx="10" cy="4" r="1.7" fill="#05070d"/>
+					<line x1="2" y1="8" x2="14" y2="8"/>
+					<circle cx="5.5" cy="8" r="1.7" fill="#05070d"/>
+					<line x1="2" y1="12" x2="14" y2="12"/>
+					<circle cx="11" cy="12" r="1.7" fill="#05070d"/>
+				</svg>
+			</button>
+			<div class="panel" id="panel">
+				<div>
+					<div class="row-head">
+						<span>Question</span>
+					</div>
+					<textarea id="questionInput" rows="3"></textarea>
+				</div>
+				<details open="">
+					<summary>Results</summary>
+					<div class="sec">
+						<div class="num-row">
+							<span>Results needed</span>
+							<input type="number" id="maxInput" min="1" max="500" step="1" value="75">
+						</div>
+						<div class="num-row">
+							<span>Auto-restart after (s, 0 = off)</span>
+							<input type="number" id="autoInput" min="0" max="600" step="1" value="0">
+						</div>
+					</div>
+				</details>
+				<details open="">
+					<summary>Colours</summary>
+					<div class="sec">
+						<div class="swatches" id="swatches"></div>
+						<div class="num-row">
+							<span>Hidden grey (while dropping)</span>
+							<input type="color" id="greyInput">
+						</div>
+					</div>
+				</details>
+				<details open="">
+					<summary>Colour flashes</summary>
+					<div class="sec" id="secFlash"></div>
+				</details>
+				<details>
+					<summary>Balls</summary>
+					<div class="sec" id="secBalls"></div>
+				</details>
+				<details>
+					<summary>Motion</summary>
+					<div class="sec" id="secMotion"></div>
+				</details>
+				<details>
+					<summary>Scene</summary>
+					<div class="sec">
+						<div id="secSceneSliders" class="sec" style="padding-top:0"></div>
+						<label class="check">
+							<span>Dropper tube</span>
+							<input type="checkbox" id="tubeToggle" checked="">
+						</label>
+						<label class="check">
+							<span>Passing lines</span>
+							<input type="checkbox" id="linesToggle">
+						</label>
+						<label class="check">
+							<span>Response counter</span>
+							<input type="checkbox" id="counterToggle" checked="">
+						</label>
+						<label class="check">
+							<span>Answer key</span>
+							<input type="checkbox" id="legendToggle" checked="">
+						</label>
+					</div>
+				</details>
+				<div class="btn-row">
+					<button type="button" id="resetBtn">Reset to defaults</button>
+					<button type="button" id="copyBtn">Copy settings</button>
+				</div>
+			</div>
+		</div>
 
-const HIDDEN_GREY = '#8a8a91';
-const CAT_LABEL = { 1: "distant", 2: "unsettled", 3: "hopeful", 4: "close" };
+		<div class="qr">
+			<img src="https_emaie3_github_io_2850_ (1).png">
+		</div>
+		<div class="demo-hint">1&ndash;4 test votes · R resets after finish</div>
 
-// Function to update badge colors on the UI overlay
-function updateKeyBadgeColors() {
-  for (const k of [1,2,3,4]) {
-    const badge = document.getElementById(`badge-${k}`);
-    if (badge) {
-      badge.style.backgroundColor = CAT_COLORS[k];
-      // Adjust text color for dark/light backgrounds automatically
-      const hex = CAT_COLORS[k].replace('#','');
-      const r = parseInt(hex.substr(0,2),16);
-      const g = parseInt(hex.substr(2,2),16);
-      const b = parseInt(hex.substr(4,2),16);
-      const yiq = (r*299 + g*587 + b*114) / 1000;
-      badge.style.color = (yiq >= 128) ? '#2D121B' : '#FFFFFF';
-    }
-  }
-}
+		<div class="arduino-connect">
+			<button id="connectArduino" type="button">Connect Arduino</button>
+			<span id="arduinoStatus" role="status">Not connected</span>
+		</div>
 
-// ---------- canvas ----------
-const canvas = document.getElementById('stage');
-const ctx = canvas.getContext('2d');
-let W, H, DPR;
+		<div class="finish" id="finish">
+			<div class="finish-inner">
+				<p class="eyebrow">The results</p>
+				<h1 id="finishHeadline">75 people answered.</h1>
+				<p class="finish-question" id="finishQuestion"></p>
+				<div class="results" id="results"></div>
+				<p class="insight" id="finishInsight"></p>
+				<p class="closing">Behind every ball is a person who stood where you're standing.</p>
+				<div class="help">
+					<strong>Need someone to talk to?</strong>
+					Beyond Blue · 1300 22 4636 &nbsp;|&nbsp; R U OK? · ruok.org.au
+				</div>
+				<div class="cta">Say hello to someone near you before you go.</div>
+				<p class="restart-hint">press R to start again</p>
+			</div>
+		</div>
 
-function resize(){
-  DPR = Math.min(window.devicePixelRatio || 1, 2);
-  W = window.innerWidth; H = window.innerHeight;
-  canvas.width = W * DPR; canvas.height = H * DPR;
-  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-  ctx.setTransform(DPR,0,0,DPR,0,0);
-}
-window.addEventListener('resize', resize);
-resize();
+		<script>
+			// =====================================================================
+			// COLOURS — edit these four hexes to restyle the cloud
+			// Key 1–4 on the keyboard (= the four physical buttons) map to 1–4 here.
+			// =====================================================================
+			const PALETTES = {
+			// current default: RGB (117,39,61), (124,153,247), (237,230,152), (101,156,117)
+			exhibit:  { 1: '#75273D', 2: '#7C99F7', 3: '#EDE698', 4: '#659C75' },
+			figma:    { 1: '#851D3E', 2: '#E3DCDD', 3: '#FFFFFF', 4: '#659C75' },
+			original: { 1: '#4770AE', 2: '#7A77A2', 3: '#B18986', 4: '#E89F63' },
+			};
+			const ACTIVE_PALETTE = 'exhibit';
+			const CAT_COLORS = Object.assign({}, PALETTES[ACTIVE_PALETTE]);
 
-// ---------- helpers ----------
-function lerp(a,b,t){ return a + (b-a)*t; }
-function clamp01(x){ return Math.max(0, Math.min(1, x)); }
-function hexToRgb(hex){ const n = parseInt(hex.slice(1),16); return [(n>>16)&255,(n>>8)&255,n&255]; }
-function mixRgb(a,b,t){ return [lerp(a[0],b[0],t), lerp(a[1],b[1],t), lerp(a[2],b[2],t)]; }
-function css(rgb, a){ return `rgba(${rgb[0]|0},${rgb[1]|0},${rgb[2]|0},${a===undefined?1:a})`; }
-function easeInOutQuad(t){ return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; }
+			let HIDDEN_GREY = '#8a8a91';
+			const BG_RGB = [5, 7, 13];
+
+			// answer wording comes straight from the key legend above, so editing the
+			// legend text also updates the results screen
+			const CAT_LABEL = {};
+			for (const k of [1,2,3,4]) {
+			const badge = document.getElementById(`badge-${k}`);
+			CAT_LABEL[k] = badge && badge.parentElement ? badge.parentElement.textContent.trim() : `Answer ${k}`;
+			}
+
+			// Function to update badge colors on the UI overlay
+			function updateKeyBadgeColors() {
+			for (const k of [1,2,3,4]) {
+			const badge = document.getElementById(`badge-${k}`);
+			if (badge) {
+			badge.style.backgroundColor = CAT_COLORS[k];
+			// Adjust text color for dark/light backgrounds automatically
+			const hex = CAT_COLORS[k].replace('#','');
+			const r = parseInt(hex.substr(0,2),16);
+			const g = parseInt(hex.substr(2,2),16);
+			const b = parseInt(hex.substr(4,2),16);
+			const yiq = (r*299 + g*587 + b*114) / 1000;
+			badge.style.color = (yiq >= 128) ? '#2D121B' : '#FFFFFF';
+			}
+			}
+			}
+
+			// ---------- canvas ----------
+			const canvas = document.getElementById('stage');
+			const ctx = canvas.getContext('2d');
+			let W, H, DPR;
+
+			function resize(){
+			DPR = Math.min(window.devicePixelRatio || 1, 2);
+			W = window.innerWidth; H = window.innerHeight;
+			canvas.width = W * DPR; canvas.height = H * DPR;
+			canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+			ctx.setTransform(DPR,0,0,DPR,0,0);
+			}
+			window.addEventListener('resize', resize);
+			resize();
+
+			// ---------- helpers ----------
+			function lerp(a,b,t){ return a + (b-a)*t; }
+			function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+			function hexToRgb(hex){ const n = parseInt(hex.slice(1),16); return [(n>>16)&255,(n>>8)&255,n&255]; }
+			function mixRgb(a,b,t){ return [lerp(a[0],b[0],t), lerp(a[1],b[1],t), lerp(a[2],b[2],t)]; }
+			function shade(rgb, amt){ return amt >= 0 ? mixRgb(rgb,[255,255,255],amt) : mixRgb(rgb,[0,0,0],-amt); }
+			function css(rgb, a){ return `rgba(${rgb[0]|0},${rgb[1]|0},${rgb[2]|0},${a===undefined?1:a})`; }
+			function easeInOutQuad(t){ return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; }
+function smoothstep(t){ return t*t*(3-2*t); }
 
 function randomUnitVector(){
   const z = Math.random()*2-1;
@@ -315,28 +411,116 @@ function randomUnitVector(){
 function cross(a,b){ return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]; }
 function normalize(v){ const l = Math.hypot(v[0],v[1],v[2]) || 1; return [v[0]/l, v[1]/l, v[2]/l]; }
 
-const GREY_RGB = hexToRgb(HIDDEN_GREY);
+let GREY_RGB = hexToRgb(HIDDEN_GREY);
 
 // ---------- settings ----------
 const settings = {
-  size: 1,         // ball size multiplier
-  speed: 1,        // orbit speed multiplier
-  cloud: 1,        // overall cloud size multiplier
-  maxVotes: 75,    // results needed before the finish screen
-  lines: false,    // passing lines
-  tube: true,      // dropper tube at the top
+  // balls
+  size: 1,            // ball size multiplier
+  shading: 0.55,      // 0 = flat colour, 1 = fuller matte shading (never glossy)
+  glow: 1,            // halo around a ball while its colour is showing
+  trail: 24,          // trail length (points); 0 = none
+  rings: 1,           // orbit ring brightness; 0 = hidden
+  // motion
+  speed: 1,           // orbit speed multiplier
+  cloud: 1,           // overall cloud size multiplier
+  outer: 1,           // distance of the outer ring (answer 1)
+  inner: 1,           // spread of the inner cloud (answers 2-4)
+  tilt: 0.62,         // 0.25 = flat disc ... 1 = fully round
+  float: 1,           // gentle bobbing amount
+  fall: 1.4,          // seconds for a ball to drop from the tube into the cloud
+  // colour flashes (balls are always grey while dropping)
+  flashRate: 1,       // how often balls flash their colour
+  flashLen: 1,        // how long each flash lasts
+  flashStrength: 1,   // how far a flash goes toward the true colour
+  firstFlash: 3,      // seconds after landing before a ball's first flash (keeps a vote untraceable)
+  // scene
+  ambient: 1,         // soft light behind the cloud
+  qsize: 1,           // question text size
+  tube: true,         // dropper tube at the top
+  lines: false,       // passing lines
+  counter: true,      // "x of y responses"
+  legend: true,       // answer key
+  // results
+  maxVotes: 75,       // results needed before the results screen
+  autoRestart: 0,     // seconds before the results screen restarts by itself; 0 = manual (R)
 };
 
+// remember the starting values so "Reset to defaults" can restore them
+const DEFAULT_SETTINGS = Object.assign({}, settings);
+const DEFAULT_COLORS = Object.assign({}, CAT_COLORS);
+const DEFAULT_GREY = HIDDEN_GREY;
+const DEFAULT_QUESTION = document.getElementById('promptText').textContent;
+
+// settings are saved in the browser so tuned values survive a reload
+const SAVE_KEY = 'take_a_beet_settings';
+function saveSettings(){
+  try {
+    const changed = {};
+    for (const k of Object.keys(DEFAULT_SETTINGS)) if (settings[k] !== DEFAULT_SETTINGS[k]) changed[k] = settings[k];
+    const colors = {};
+    for (const k of [1,2,3,4]) if (CAT_COLORS[k].toLowerCase() !== DEFAULT_COLORS[k].toLowerCase()) colors[k] = CAT_COLORS[k];
+    const question = document.getElementById('promptText').textContent;
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      settings: changed, colors,
+      grey: HIDDEN_GREY.toLowerCase() !== DEFAULT_GREY.toLowerCase() ? HIDDEN_GREY : undefined,
+      question: question !== DEFAULT_QUESTION ? question : undefined,
+    }));
+  } catch (_) {}
+}
+function loadSettings(){
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    const hex = /^#[0-9a-f]{6}$/i;
+    if (saved.settings) for (const k of Object.keys(DEFAULT_SETTINGS)){
+      if (typeof saved.settings[k] === typeof DEFAULT_SETTINGS[k]) settings[k] = saved.settings[k];
+    }
+    if (saved.colors) for (const k of [1,2,3,4]) if (hex.test(saved.colors[k])) CAT_COLORS[k] = saved.colors[k];
+    if (hex.test(saved.grey)){ HIDDEN_GREY = saved.grey; GREY_RGB = hexToRgb(HIDDEN_GREY); }
+    if (typeof saved.question === 'string') document.getElementById('promptText').textContent = saved.question;
+  } catch (_) {}
+}
+loadSettings();
+
 // ---------- ball cloud state ----------
-const TRAIL_LEN = 22;
-const FALL_MS = 1400;
+let FALL_MS = 1400;
+const RING_STEPS = 96;
 const cloudCenter = { x: 0, y: 0 };
 let cloudRadius = 0;
 
+// 0 = normal display, 1 = results layout (cloud glides left, colours revealed)
+let finishK = 0;
+let finishTarget = 0;
+
 function layoutCenter(){
-  cloudCenter.x = W/2;
-  cloudCenter.y = H*0.6;
-  cloudRadius = Math.min(W,H) * 0.21 * settings.cloud;
+  const e = smoothstep(finishK);
+  const portrait = W < H*1.05;
+  const R0 = Math.min(W,H) * 0.21 * settings.cloud;
+
+  // Where the cloud ends up while the results show, and how big it may be so
+  // that even the outermost orbits (about 2.15x the radius, plus ball size)
+  // stay inside the space that's left over, clear of the results column.
+  let endX, endY, fitW, fitH;
+  if (portrait){
+    endX = W/2;  endY = H*0.27;
+    fitW = W*0.45;
+    fitH = Math.min(endY - 60, H*0.52 - endY - 20);
+  } else {
+    const panelLeft = W*0.95 - Math.min(500, W*0.44);   // left edge of the results column
+    endX = 10 + (panelLeft - 24)/2;
+    endY = H*0.52;
+    fitW = (panelLeft - 24 - 20)/2;
+    fitH = Math.min(endY - 60, H - endY - 60);
+  }
+  const endScale = Math.max(0.25, Math.min(0.95,
+    (fitW - 30) / (R0*2.15),
+    (fitH - 30) / (R0*2.15*settings.tilt)));
+
+  cloudCenter.x = lerp(W/2, endX, e);
+  cloudCenter.y = lerp(H*0.6, endY, e);
+  cloudRadius = R0 * lerp(1, endScale, e);
 }
 layoutCenter();
 window.addEventListener('resize', layoutCenter);
@@ -375,28 +559,74 @@ function roundedRectPath(x, y, w, h, r){
   ctx.closePath();
 }
 
-function drawTube(){
+// the part of the tube that sits BEHIND the balls: dark interior + collar
+function drawTubeBack(){
+  const a = 1 - finishK;
+  if (!settings.tube || a < 0.01) return;
   const g = tubeGeom();
   const x0 = g.x - g.w/2;
 
   ctx.save();
-  ctx.fillStyle = 'rgba(210,222,245,0.05)';
+  ctx.globalAlpha = a;
+
+  const body = ctx.createLinearGradient(x0, 0, x0 + g.w, 0);
+  body.addColorStop(0,    'rgba(210,222,245,0.11)');
+  body.addColorStop(0.2,  'rgba(210,222,245,0.025)');
+  body.addColorStop(0.8,  'rgba(210,222,245,0.025)');
+  body.addColorStop(1,    'rgba(210,222,245,0.11)');
+  ctx.fillStyle = body;
   ctx.fillRect(x0, -4, g.w, g.mouthY + 4);
-  ctx.strokeStyle = 'rgba(210,222,245,0.28)';
-  ctx.lineWidth = 1.5;
+
+  const cw = g.w + 18, ch = 11;
+  roundedRectPath(g.x - cw/2, g.mouthY - 2, cw, ch, 4);
+  const collar = ctx.createLinearGradient(0, g.mouthY - 2, 0, g.mouthY + ch);
+  collar.addColorStop(0, 'rgba(210,222,245,0.20)');
+  collar.addColorStop(1, 'rgba(210,222,245,0.07)');
+  ctx.fillStyle = collar;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(210,222,245,0.38)';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+  ctx.restore();
+}
+
+// the front glass edges (drawn after the balls, so balls read as inside the tube)
+// plus a soft light at the opening whenever a ball is leaving
+function drawTubeFront(mouthGlow){
+  const a = 1 - finishK;
+  if (!settings.tube || a < 0.01) return;
+  const g = tubeGeom();
+  const x0 = g.x - g.w/2;
+
+  ctx.save();
+  ctx.globalAlpha = a;
+
+  ctx.fillStyle = 'rgba(210,222,245,0.035)';
+  ctx.fillRect(x0, -4, g.w, g.mouthY + 4);
+
+  ctx.strokeStyle = 'rgba(210,222,245,0.30)';
+  ctx.lineWidth = 1.4;
   ctx.beginPath();
   ctx.moveTo(x0, -4);         ctx.lineTo(x0, g.mouthY);
   ctx.moveTo(x0 + g.w, -4);   ctx.lineTo(x0 + g.w, g.mouthY);
   ctx.stroke();
 
-  const cw = g.w + 16, ch = 10;
-  roundedRectPath(g.x - cw/2, g.mouthY - 2, cw, ch, 4);
-  ctx.fillStyle = 'rgba(210,222,245,0.12)';
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(210,222,245,0.4)';
-  ctx.lineWidth = 1.2;
-  ctx.stroke();
+  if (mouthGlow > 0.01){
+    const r = g.w * 1.3;
+    const glow = ctx.createRadialGradient(g.x, g.mouthY + 8, 0, g.x, g.mouthY + 8, r);
+    glow.addColorStop(0, `rgba(215,225,245,${0.20*mouthGlow})`);
+    glow.addColorStop(1, 'rgba(215,225,245,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(g.x - r, g.mouthY - r, r*2, r*2);
+  }
   ctx.restore();
+}
+
+// ---------- live-data broadcast (read by the results website) ----------
+const dataChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('take_a_beet_channel') : null;
+function publishData(payload){
+  try { localStorage.setItem('take_a_beet_data', JSON.stringify(payload)); } catch (_) {}
+  if (dataChannel) dataChannel.postMessage(payload);
 }
 
 // ---------- adding a ball ----------
@@ -418,243 +648,487 @@ function addParticle(cat){
     ly = -40;
   }
 
+  // "I often feel this way" balls sit on the outer shell; everyone else orbits closer in
   const orbitK = (cat === 1) ? (1.45 + Math.random()*0.50) : (0.25 + Math.random()*0.60);
 
   const p = {
     cat, u, v,
-    orbitK,
+    orbitK, orbitBase: orbitK,
     phase: Math.random()*Math.PI*2,
-    speed: (0.18 + Math.random()*0.26) * (Math.random()<0.5?-1:1),
-    wobblePhase: Math.random()*Math.PI*2,
-    wobbleSpeed: 0.2 + Math.random()*0.3,
-    radiusDrift: 0.05 + Math.random()*0.07,
-    bobPhase: Math.random()*Math.PI*2,
-    bobSpeed: 0.35 + Math.random()*0.5,
-    bobAmp: 3 + Math.random()*5,
-    baseR: 9 + Math.random()*4,
-    rgb: hexToRgb(CAT_COLORS[cat]),
-    born: performance.now(),
-    lx, ly,
-    trail: [],
-    reveal: 0,
-    pulseStart: -1, pulseDur: 0, pulsePeak: 0, nextPulse: null,
+    speed: (0.18 + Math.random()*0.26) * (Math.random()<0.5?-1:1
+    wobblePhase:="" Math.random()*Math.PI*2=""
+    wobbleSpeed:="" 0.2="" + Math.random()*0.3=""
+    radiusDrift:="" 0.05="" + Math.random()*0.07=""
+    bobPhase:="" Math.random()*Math.PI*2=""
+    bobSpeed:="" 0.35="" + Math.random()*0.5=""
+    bobAmp:="" 3="" + Math.random()*5=""
+    baseR:="" 9="" + Math.random()*4=""
+    rgb:="" hexToRgb(CAT_COLORS=""[cat=""
+    born:="" performance.now=""
+    lx="", ly=""
+    trail:=""
+    reveal:="" 0=""
+    pulseStart:="" -1="", pulseDur:="" 0="", pulsePeak:="" 0="", nextPulse:="" null="",
   };
 
-  p.ringUnit = [];
-  const RING_STEPS = 64;
-  for (let i=0;i<=RING_STEPS;i++){
-    const a = (i/RING_STEPS) * Math.PI*2;
-    p.ringUnit.push([
-      Math.cos(a)*p.u[0] + Math.sin(a)*p.v[0],
-      (Math.cos(a)*p.u[1] + Math.sin(a)*p.v[1]) * 0.62,
-    ]);
-  }
+  // unit orbit ellipse (x, y, z) — scaled by the live cloud radius each frame
+			p.ringUnit = [];
+			for (let i=0;i<=RING_STEPS;i++){
+			const a = (i/RING_STEPS) * Math.PI*2;
+			const c = Math.cos(a), s = Math.sin(a);
+			p.ringUnit.push([
+			c*p.u[0] + s*p.v[0],
+			(c*p.u[1] + s*p.v[1]),
+			c*p.u[2] + s*p.v[2],
+			]);
+			}
 
-  particles.push(p);
-  if (particles.length > settings.maxVotes) particles.shift();
-  responseCount++;
-  categoryCounts[cat]++;
-  lastCategory = cat;
-  updateReadout();
+			particles.push(p);
+			if (particles.length > settings.maxVotes) particles.shift();
+			responseCount++;
+			categoryCounts[cat]++;
+			lastCategory = cat;
+			updateReadout();
 
-  const currentPayload = { responseCount, categoryCounts };
-  localStorage.setItem('take_a_beet_data', JSON.stringify(currentPayload));
-  if ('BroadcastChannel' in window) {
-      new BroadcastChannel('take_a_beet_channel').postMessage(currentPayload);
-  }
+			publishData({ responseCount, categoryCounts });
 
-  if (responseCount >= settings.maxVotes){
-    ended = true;
-    setTimeout(showFinish, 700);
-  }
-}
+			if (responseCount >= settings.maxVotes){
+			ended = true;
+			setTimeout(showFinish, 700);
+			}
+			}
 
-function buildHexCluster(container, total, filledN, color){
-  container.innerHTML = '';
-  const cx = 65, cy = 65, r = 30;
-  const positions = [[0,0]];
-  for (let i=0;i<6 && positions.length<total;i++){
-    const a = (Math.PI/180) * (60*i);
-    positions.push([Math.cos(a)*r*1.55, Math.sin(a)*r*1.55]);
-  }
-  for (let i=0;i<total;i++){
-    const div = document.createElement('div');
-    div.className = 'hexcell';
-    const [dx,dy] = positions[i] || [0,0];
-    div.style.left = (cx + dx - 20) + 'px';
-    div.style.top  = (cy + dy - 23) + 'px';
-    if (i < filledN){ div.classList.add('filled'); div.style.background = color; }
-    container.appendChild(div);
-  }
-}
+			// ---------- results screen ----------
+			let resultFills = [];
 
-function showFinish(){
-  if (!ended) return;
-  const total = responseCount;
-  const topCat = lastCategory || 3;
-  const proportion = categoryCounts[topCat] / total;
-  const outOfSeven = Math.max(1, Math.min(7, Math.round(proportion*7)));
+			function buildResults(){
+			const total = Math.max(1, responseCount);
+			const wrap = document.getElementById('results');
+			wrap.innerHTML = '';
+			resultFills = [];
 
-  document.getElementById('finishHeadline').textContent = `${total} people paused here.`;
-  document.getElementById('statA').textContent =
-    `${outOfSeven} out of 7 people who answered felt "${CAT_LABEL[topCat]}" — just like you.`;
-  buildHexCluster(document.getElementById('clusterA'), 7, outOfSeven, CAT_COLORS[topCat]);
-  document.getElementById('finish').classList.add('show');
-}
+			let topCat = 1;
+			for (const k of [1,2,3,4]){
+			if (categoryCounts[k] > categoryCounts[topCat]) topCat = k;
+			const pct = categoryCounts[k] / total * 100;
 
-function resetAll(){
-  ended = false;
-  particles = [];
-  responseCount = 0;
-  categoryCounts = {1:0,2:0,3:0,4:0};
-  lastCategory = null;
-  updateReadout();
-  
-  const resetPayload = { responseCount: 0, categoryCounts: {1:0,2:0,3:0,4:0} };
-  localStorage.setItem('take_a_beet_data', JSON.stringify(resetPayload));
-  if ('BroadcastChannel' in window) {
-      new BroadcastChannel('take_a_beet_channel').postMessage(resetPayload);
-  }
+			const row = document.createElement('div');
+			const head = document.createElement('div');
+			head.className = 'res-head';
+			const dot = document.createElement('span');
+			dot.className = 'res-dot';
+			dot.style.background = CAT_COLORS[k];
+			const label = document.createElement('span');
+			label.className = 'res-label';
+			label.textContent = CAT_LABEL[k];
+			const val = document.createElement('span');
+			val.className = 'res-val';
+			val.textContent = `${Math.round(pct)}%`;
+			head.appendChild(dot); head.appendChild(label); head.appendChild(val);
 
-  document.getElementById('finish').classList.remove('show');
-}
+			const track = document.createElement('div');
+			track.className = 'res-track';
+			const fill = document.createElement('div');
+			fill.className = 'res-fill';
+			fill.style.background = CAT_COLORS[k];
+			fill.style.width = '0%';
+			track.appendChild(fill);
 
-// ---------- settings panel wiring ----------
-const gearEl = document.getElementById('gear');
-const panelEl = document.getElementById('panel');
-gearEl.addEventListener('click', () => {
-  panelEl.classList.toggle('open');
-  gearEl.classList.toggle('active');
-});
+			row.appendChild(head); row.appendChild(track);
+			wrap.appendChild(row);
+			resultFills.push({ fill, pct });
+			}
 
-const questionInput = document.getElementById('questionInput');
-questionInput.value = document.getElementById('promptText').textContent;
-questionInput.addEventListener('input', (e) => {
-  document.getElementById('promptText').textContent = e.target.value;
-});
+			const topPct = Math.round(categoryCounts[topCat] / total * 100);
+			document.getElementById('finishHeadline').textContent =
+			`${responseCount} ${responseCount === 1 ? 'person' : 'people'} answered.`;
+			document.getElementById('finishQuestion').textContent = document.getElementById('promptText').textContent;
+			document.getElementById('finishInsight').textContent =
+			`The most common answer was “${CAT_LABEL[topCat]}” — ${topPct}% of responses.`;
+			}
 
-document.getElementById('maxInput').addEventListener('input', (e) => {
-  const n = parseInt(e.target.value, 10);
-  if (!isFinite(n) || n < 1) return;
+			let autoTimer = null;
+			function scheduleAutoRestart(){
+			clearTimeout(autoTimer);
+			if (settings.autoRestart > 0) autoTimer = setTimeout(() => { if (ended) resetAll(); }, settings.autoRestart * 1000);
+			}
+
+			function showFinish(){
+			if (!ended) return;   // results target was raised again before this fired
+			buildResults();
+			finishTarget = 1;
+			document.body.classList.add('finished');
+			document.getElementById('finish').classList.add('show');
+			// let the layout settle, then animate the bars in
+			setTimeout(() => { for (const r of resultFills) r.fill.style.width = r.pct + '%'; }, 900);
+			scheduleAutoRestart();
+			}
+
+			function hideFinish(){
+			clearTimeout(autoTimer);
+			finishTarget = 0;
+			document.body.classList.remove('finished');
+			document.getElementById('finish').classList.remove('show');
+			for (const r of resultFills) r.fill.style.width = '0%';
+			}
+
+			function resetAll(){
+			ended = false;
+			particles = [];
+			responseCount = 0;
+			categoryCounts = {1:0,2:0,3:0,4:0};
+			lastCategory = null;
+			updateReadout();
+
+			publishData({ responseCount: 0, categoryCounts: {1:0,2:0,3:0,4:0} });
+
+			hideFinish();
+			}
+
+			// ---------- settings panel wiring ----------
+			const gearEl = document.getElementById('gear');
+			const panelEl = document.getElementById('panel');
+			gearEl.addEventListener('click', () => {
+			panelEl.classList.toggle('open');
+			gearEl.classList.toggle('active');
+			});
+
+			const questionInput = document.getElementById('questionInput');
+			questionInput.value = document.getElementById('promptText').textContent;
+			questionInput.addEventListener('input', (e) => {
+			document.getElementById('promptText').textContent = e.target.value;
+			saveSettings();
+			});
+
+			document.getElementById('maxInput').addEventListener('input', (e) => {
+			const n = parseInt(e.target.value, 10);
+			if (!isFinite(n) || n < 1) return;
   settings.maxVotes = Math.min(n, 500);
+  saveSettings();
   updateReadout();
   if (!ended && responseCount >= settings.maxVotes){
-    ended = true;
-    setTimeout(showFinish, 700);
-  } else if (ended && responseCount < settings.maxVotes){
+			ended = true;
+			setTimeout(showFinish, 700);
+			} else if (ended && responseCount < settings.maxVotes){
     ended = false;
-    document.getElementById('finish').classList.remove('show');
+    hideFinish();
   }
 });
 
-document.getElementById('cloudRange').addEventListener('input', (e) => {
-  settings.cloud = parseFloat(e.target.value);
-  document.getElementById('cloudVal').textContent = settings.cloud.toFixed(2) + '×';
+// ---------- adjusters: built from this list, saved between reloads ----------
+// [section, setting, label, min, max, step, format]
+const x2 = v => v.toFixed(2) + '×';
+const SLIDERS = [
+  ['secFlash',  'flashRate',     'Flash frequency',            0.25, 4,    0.05, x2],
+  ['secFlash',  'flashLen',      'Flash length',               0.4,  2.5,  0.05, x2],
+  ['secFlash',  'flashStrength', 'Flash strength',             0.3,  1,    0.05, v => v.toFixed(2)],
+  ['secFlash',  'firstFlash',    'Delay before first flash',   0,    15,   0.5,  v => v.toFixed(1) + 's'],
+  ['secBalls',  'size',          'Ball size',                  0.5,  2,    0.05, x2],
+  ['secBalls',  'shading',       'Ball shading',               0,    1,    0.05, v => v.toFixed(2)],
+  ['secBalls',  'glow',          'Glow strength',              0,    2,    0.05, x2],
+  ['secBalls',  'trail',         'Trail length',               0,    40,   1,    v => String(v|0)],
+  ['secBalls',  'rings',         'Orbit ring brightness',      0,    2.5,  0.05, x2],
+  ['secMotion', 'speed',         'Orbit speed',                0.2,  3,    0.05, x2],
+  ['secMotion', 'cloud',         'Cloud size',                 0.5,  1.8,  0.05, x2],
+  ['secMotion', 'outer',         'Outer ring distance',        0.6,  1.5,  0.05, x2],
+  ['secMotion', 'inner',         'Inner cloud spread',         0.5,  1.8,  0.05, x2],
+  ['secMotion', 'tilt',          'View tilt (flat to round)',  0.25, 1,    0.01, v => v.toFixed(2)],
+  ['secMotion', 'float',         'Float / bobbing',            0,    3,    0.05, x2],
+  ['secMotion', 'fall',          'Drop time',                  0.6,  4,    0.1,  v => v.toFixed(1) + 's'],
+  ['secSceneSliders', 'ambient', 'Background glow',            0,    2.5,  0.05, x2],
+  ['secSceneSliders', 'qsize',   'Question text size',         0.6,  2,    0.05, x2],
+];
+const sliderEls = {};
+
+// things that depend on a setting beyond just reading it each frame
+function applySideEffects(){
+  FALL_MS = settings.fall * 1000;
+  document.documentElement.style.setProperty('--qs', settings.qsize);
+  document.getElementById('readoutBox').style.display = settings.counter ? '' : 'none';
+  document.getElementById('keyLegend').style.display = settings.legend ? '' : 'none';
   layoutCenter();
-});
-document.getElementById('sizeRange').addEventListener('input', (e) => {
-  settings.size = parseFloat(e.target.value);
-  document.getElementById('sizeVal').textContent = settings.size.toFixed(2) + '×';
-});
-document.getElementById('speedRange').addEventListener('input', (e) => {
-  settings.speed = parseFloat(e.target.value);
-  document.getElementById('speedVal').textContent = settings.speed.toFixed(2) + '×';
-});
-document.getElementById('tubeToggle').addEventListener('change', (e) => {
-  settings.tube = e.target.checked;
-});
-document.getElementById('linesToggle').addEventListener('change', (e) => {
-  settings.lines = e.target.checked;
-  if (settings.lines){
-    if (walkers.length === 0) for (let i=0;i<3;i++) spawnWalker();
-  } else {
-    walkers = [];
-    mouseWalker.trail = [];
-    mouseWalker.active = false;
-  }
-});
+}
 
-(function buildSwatches(){
-  const wrap = document.getElementById('swatches');
-  for (const k of [1,2,3,4]){
-    const label = document.createElement('label');
-    label.className = 'swatch';
+(function buildSliders(){
+  for (const [sec, key, label, min, max, step, fmt] of SLIDERS){
+    const wrap = document.createElement('div');
+    const head = document.createElement('div');
+    head.className = 'row-head';
+    const name = document.createElement('span');
+    name.textContent = label;
+    const valEl = document.createElement('span');
+    valEl.className = 'val';
+    head.appendChild(name); head.appendChild(valEl);
     const input = document.createElement('input');
-    input.type = 'color';
-    input.value = CAT_COLORS[k].toLowerCase();
+    input.type = 'range'; input.min = min; input.max = max; input.step = step;
     input.addEventListener('input', (e) => {
-      CAT_COLORS[k] = e.target.value;
-      const rgb = hexToRgb(CAT_COLORS[k]);
-      for (const p of particles) if (p.cat === k) p.rgb = rgb;
-      updateKeyBadgeColors(); // Update overlay badges live
+      settings[key] = parseFloat(e.target.value);
+      valEl.textContent = fmt(settings[key]);
+      applySideEffects();
+      saveSettings();
     });
-    const cap = document.createElement('span');
-    cap.textContent = String(k);
-    label.appendChild(input);
-    label.appendChild(cap);
-    wrap.appendChild(label);
+    wrap.appendChild(head); wrap.appendChild(input);
+    document.getElementById(sec).appendChild(wrap);
+    sliderEls[key] = { input, valEl, fmt };
   }
-  updateKeyBadgeColors(); // Set initial badge colors on load
 })();
 
-function drawBall(x, y, R, rgb, alpha, glow){
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  if (glow > 0){ ctx.shadowColor = css(rgb, 0.85); ctx.shadowBlur = R * glow; }
-  ctx.fillStyle = css(rgb);
-  ctx.beginPath();
-  ctx.arc(x, y, R, 0, Math.PI*2);
-  ctx.fill();
-  ctx.restore();
+document.getElementById('autoInput').addEventListener('input', (e) => {
+  settings.autoRestart = Math.max(0, parseInt(e.target.value, 10) || 0);
+  saveSettings();
+  if (ended) scheduleAutoRestart();
+});
+document.getElementById('greyInput').addEventListener('input', (e) => {
+  HIDDEN_GREY = e.target.value;
+  GREY_RGB = hexToRgb(HIDDEN_GREY);
+  saveSettings();
+});
+document.getElementById('counterToggle').addEventListener('change', (e) => {
+  settings.counter = e.target.checked; applySideEffects(); saveSettings();
+});
+document.getElementById('legendToggle').addEventListener('change', (e) => {
+  settings.legend = e.target.checked; applySideEffects(); saveSettings();
+});
+
+// push every stored value back into the controls (used on load and on reset)
+function syncAll(){
+  for (const key in sliderEls){
+    const el = sliderEls[key];
+    el.input.value = settings[key];
+    el.valEl.textContent = el.fmt(settings[key]);
+  }
+  document.getElementById('maxInput').value = settings.maxVotes;
+  document.getElementById('autoInput').value = settings.autoRestart;
+  document.getElementById('tubeToggle').checked = settings.tube;
+  document.getElementById('linesToggle').checked = settings.lines;
+  document.getElementById('counterToggle').checked = settings.counter;
+  document.getElementById('legendToggle').checked = settings.legend;
+  document.getElementById('greyInput').value = HIDDEN_GREY;
+  for (const k of [1,2,3,4]) if (swatchInputs[k]) swatchInputs[k].value = CAT_COLORS[k].toLowerCase();
+  questionInput.value = document.getElementById('promptText').textContent;
+  updateKeyBadgeColors();
+  updateReadout();
+  applySideEffects();
 }
 
-function updatePulse(p, t, age){
-  if (age <= FALL_MS){ p.reveal = 0; return; }
+document.getElementById('resetBtn').addEventListener('click', () => {
+  Object.assign(settings, DEFAULT_SETTINGS);
+  Object.assign(CAT_COLORS, DEFAULT_COLORS);
+  HIDDEN_GREY = DEFAULT_GREY;
+  GREY_RGB = hexToRgb(HIDDEN_GREY);
+  document.getElementById('promptText').textContent = DEFAULT_QUESTION;
+  for (const p of particles) p.rgb = hexToRgb(CAT_COLORS[p.cat]);
+  try { localStorage.removeItem(SAVE_KEY); } catch (_) {}
+  if (!settings.lines){ walkers = []; mouseWalker.trail = []; mouseWalker.active = false; }
+  syncAll();
+});
 
-  if (p.nextPulse === null) p.nextPulse = t + 300 + Math.random()*2200;
+// copy the current settings as JSON, handy for pasting into the defaults later
+document.getElementById('copyBtn').addEventListener('click', () => {
+  const text = JSON.stringify({ settings, colors: CAT_COLORS, grey: HIDDEN_GREY }, null, 2);
+  const btn = document.getElementById('copyBtn');
+  const done = () => { btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = 'Copy settings'; }, 1400); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => {});
+			else done();
+			});
 
-  if (p.pulseStart < 0 && t >= p.nextPulse){
-    p.pulseStart = t;
-    p.pulseDur = 1800 + Math.random()*2200;
-    p.pulsePeak = 0.8 + Math.random()*0.2;
+			document.getElementById('tubeToggle').addEventListener('change', (e) => {
+			settings.tube = e.target.checked;
+			saveSettings();
+			});
+			document.getElementById('linesToggle').addEventListener('change', (e) => {
+			settings.lines = e.target.checked;
+			if (settings.lines){
+			if (walkers.length === 0) for (let i=0;i<3;i++) spawnWalker=""
+  } else=""
+    walkers =""
+    mouseWalker.trail =""
+    mouseWalker.active = "false"
   }
-  if (p.pulseStart >= 0){
-    const x = (t - p.pulseStart) / p.pulseDur;
-    if (x >= 1){
-      p.reveal = 0;
-      p.pulseStart = -1;
-      p.nextPulse = t + 1200 + Math.random()*5500;
-    } else {
-      p.reveal = p.pulsePeak * Math.pow(Math.sin(Math.PI * Math.pow(x, 0.75)), 2);
-    }
-  } else {
-    p.reveal = 0;
-  }
-}
+  saveSettings=""
+});
 
-function drawParticles(t){
-  const cx = cloudCenter.x, cy = cloudCenter.y;
+const="" swatchInputs =""
+(function="" buildSwatches=""
+  const="" wrap = "document.getElementById"
+  for='' (const='' k='' of='' [1='',2='',3='',4=''
+    const='' label = 'document.createElement'
+    label.className = 'swatch'
+    const='' input = 'document.createElement'
+    input.type = 'color'
+    input.value = 'CAT_COLORS'[k=''].toLowerCase=''
+    swatchInputs=''[k=''] = input=''
+    input.addEventListener=''('input', (e='') =>
+				{
+				CAT_COLORS[k] = e.target.value;
+				const rgb = hexToRgb(CAT_COLORS[k]);
+				for (const p of particles) if (p.cat === k) p.rgb = rgb;
+				updateKeyBadgeColors(); // Update overlay badges live
+				saveSettings();
+				});
+				const cap = document.createElement('span');
+				cap.textContent = String(k);
+				label.appendChild(input);
+				label.appendChild(cap);
+				wrap.appendChild(label);
+				}
+				updateKeyBadgeColors(); // Set initial badge colors on load
+				})();
 
-  const projected = particles.map(p => {
-    const age = t - p.born;
+				// ---------- drawing ----------
 
-    const angle = p.phase + simTime * p.speed;
-    const orbitR = cloudRadius * p.orbitK * (1 + Math.sin(simTime*p.wobbleSpeed + p.wobblePhase) * p.radiusDrift);
-    const x3 = orbitR * (Math.cos(angle)*p.u[0] + Math.sin(angle)*p.v[0]);
-    const y3 = orbitR * (Math.cos(angle)*p.u[1] + Math.sin(angle)*p.v[1]);
-    const z3 = orbitR * (Math.cos(angle)*p.u[2] + Math.sin(angle)*p.v[2]);
+				// One ball: soft halo while its colour is showing, then an opaque matte sphere.
+				// Light comes from the upper-left, but there is no specular highlight — just a
+				// gentle lift on that side and a darker, rounder edge. shading = 0 gives flat colour.
+				function drawBall(x, y, R, rgb, reveal){
+				if (reveal > 0.02 && settings.glow > 0){
+				const hr = R * (1.5 + 1.3*reveal);
+				const halo = ctx.createRadialGradient(x, y, R*0.7, x, y, hr);
+				halo.addColorStop(0, css(rgb, 0.30*reveal*settings.glow));
+				halo.addColorStop(1, css(rgb, 0));
+				ctx.fillStyle = halo;
+				ctx.beginPath();
+				ctx.arc(x, y, hr, 0, Math.PI*2);
+				ctx.fill();
+				}
 
-    let sx = cx + x3;
-    let sy = cy + y3*0.62 + Math.sin(simTime*p.bobSpeed + p.bobPhase) * p.bobAmp;
+				const k = settings.shading;
+				const body = ctx.createRadialGradient(x - R*0.30, y - R*0.34, R*0.05, x, y, R*1.02);
+				body.addColorStop(0,    css(shade(rgb,  0.16*k)));
+				body.addColorStop(0.55, css(rgb));
+				body.addColorStop(1,    css(shade(rgb, -0.42*k)));
+				ctx.fillStyle = body;
+				ctx.beginPath();
+				ctx.arc(x, y, R, 0, Math.PI*2);
+				ctx.fill();
 
-    if (age < FALL_MS){
+				// hairline edge so overlapping balls stay distinct
+				ctx.lineWidth = 1;
+				ctx.strokeStyle = 'rgba(0,0,0,0.30)';
+				ctx.stroke();
+				}
+
+				// tapered comet ribbon behind a ball: one smooth filled shape, fading toward the tail
+				function drawRibbon(trail, R, rgb, a){
+				const n = trail.length;
+				if (n < 3) return;
+  const left = [], right = [];
+  for (let i=0;i<n;i
+    const='' p0 = 'trail'[Math.max=''(0='', i-1='')], p1 = 'trail'[Math.min=''(n-1='', i=''+1=''
+    const='' dx = 'p1.x' -='' p0.x='', dy = 'p1.y' -='' p0.y=''
+    const='' l = 'Math.hypot'(dx='', dy='') || 1=''
+    const='' nx = '-dy'/l, ny = dx/l;
+				const w = R * 0.6 * Math.pow(i/(n-1), 1.15);
+				left.push([trail[i].x + nx*w, trail[i].y + ny*w]);
+				right.push([trail[i].x - nx*w, trail[i].y - ny*w]);
+				}
+				const grad = ctx.createLinearGradient(trail[0].x, trail[0].y, trail[n-1].x, trail[n-1].y);
+				grad.addColorStop(0, css(rgb, 0));
+				grad.addColorStop(1, css(rgb, 0.34*a));
+				ctx.fillStyle = grad;
+				ctx.beginPath();
+				ctx.moveTo(left[0][0], left[0][1]);
+				for (let i=1;i<n;i++) ctx.lineTo=''(left=''[i=''][0=''], left=''[i=''][1=''
+  for='' (let='' i='n-1;i'>
+					=0;i--) ctx.lineTo(right[i][0], right[i][1]);
+					ctx.closePath();
+					ctx.fill();
+					}
+
+					// orbit ring, split into a brighter near side and a dimmer far side for depth
+					function drawRing(p, rgb, alpha){
+					const ring = p.ringUnit;
+					const base = cloudRadius * p.orbitK;
+					const cx = cloudCenter.x, cy = cloudCenter.y;
+					ctx.strokeStyle = css(rgb);
+					ctx.lineWidth = 1;
+					ctx.lineJoin = 'round';
+
+					for (const front of [false, true]){
+					ctx.beginPath();
+					let drawing = false;
+					for (let i=1;i<ring.length;i
+		const='' a = 'ring'[i-1=''], b = 'ring'[i=''
+		const='' isFront ='' (a=''[2=''] + b=''[2='']) >
+						= 0;
+						if (isFront === front){
+						if (!drawing){ ctx.moveTo(cx + a[0]*base, cy + a[1]*base*settings.tilt); drawing = true; }
+						ctx.lineTo(cx + b[0]*base, cy + b[1]*base*settings.tilt);
+						} else {
+						drawing = false;
+						}
+						}
+						ctx.globalAlpha = alpha * (front ? 1 : 0.4);
+						ctx.stroke();
+						}
+						ctx.globalAlpha = 1;
+						}
+
+						// faint ambient light behind the cloud so it sits in a space, not on a flat fill
+						function drawAmbient(){
+						const r = cloudRadius * 2.6;
+						const g = ctx.createRadialGradient(cloudCenter.x, cloudCenter.y, 0, cloudCenter.x, cloudCenter.y, r);
+						g.addColorStop(0,    `rgba(64,84,132,${0.17*settings.ambient})`);
+						g.addColorStop(0.55, `rgba(64,84,132,${0.05*settings.ambient})`);
+						g.addColorStop(1,    'rgba(64,84,132,0)');
+						ctx.fillStyle = g;
+						ctx.fillRect(cloudCenter.x - r, cloudCenter.y - r, r*2, r*2);
+						}
+
+						function updatePulse(p, t, age){
+						if (age <= FALL_MS){ p.reveal = 0; return; }
+
+						if (p.nextPulse === null) p.nextPulse = t + settings.firstFlash*1000*(1 + Math.random()*1.5);
+
+						if (p.pulseStart < 0 && t >= p.nextPulse){
+						p.pulseStart = t;
+						p.pulseDur = (1800 + Math.random()*2200) * settings.flashLen;
+						p.pulsePeak = clamp01((0.8 + Math.random()*0.2) * settings.flashStrength);
+						}
+						if (p.pulseStart >= 0){
+						const x = (t - p.pulseStart) / p.pulseDur;
+						if (x >= 1){
+						p.reveal = 0;
+						p.pulseStart = -1;
+						p.nextPulse = t + (900 + Math.random()*4200) / settings.flashRate;
+						} else {
+						p.reveal = p.pulsePeak * Math.pow(Math.sin(Math.PI * Math.pow(x, 0.75)), 2);
+						}
+						} else {
+						p.reveal = 0;
+						}
+
+						// when the results are showing, every ball shows its true colour
+						if (finishK > 0) p.reveal = Math.max(p.reveal, finishK);
+						}
+
+						// returns how strongly the tube mouth should glow (a ball is leaving it)
+						function drawParticles(t){
+						const cx = cloudCenter.x, cy = cloudCenter.y;
+						let mouthGlow = 0;
+
+						const projected = particles.map(p => {
+						p.orbitK = p.orbitBase * (p.cat === 1 ? settings.outer : settings.inner);
+						const age = t - p.born;
+
+						const angle = p.phase + simTime * p.speed;
+						const orbitR = cloudRadius * p.orbitK * (1 + Math.sin(simTime*p.wobbleSpeed + p.wobblePhase) * p.radiusDrift);
+						const x3 = orbitR * (Math.cos(angle)*p.u[0] + Math.sin(angle)*p.v[0]);
+						const y3 = orbitR * (Math.cos(angle)*p.u[1] + Math.sin(angle)*p.v[1]);
+						const z3 = orbitR * (Math.cos(angle)*p.u[2] + Math.sin(angle)*p.v[2]);
+
+						let sx = cx + x3;
+						let sy = cy + y3*settings.tilt + Math.sin(simTime*p.bobSpeed + p.bobPhase) * p.bobAmp * settings.float;
+
+						if (age < FALL_MS){
       const k = easeInOutQuad(clamp01(age / FALL_MS));
       sx = lerp(p.lx, sx, k);
       sy = lerp(p.ly, sy, k);
     }
+    if (age < 1000) mouthGlow = Math.max(mouthGlow, Math.sin(Math.PI * age / 1000));
 
     p.trail.push({x:sx, y:sy});
-    if (p.trail.length > TRAIL_LEN) p.trail.shift();
+    while (p.trail.length > settings.trail) p.trail.shift();
 
     updatePulse(p, t, age);
 
@@ -668,54 +1142,29 @@ function drawParticles(t){
     const p = o.p;
     const scale = lerp(0.6, 1.4, o.depth) * (1 + 0.1*p.reveal);
     const R = p.baseR * scale * settings.size;
-    const alpha = lerp(0.5, 1.0, o.depth);
 
-    const rgb = mixRgb(GREY_RGB, p.rgb, p.reveal);
+    // balls are opaque; distance is shown by fading their colour toward the
+    // background rather than by making them see-through
+    const near = lerp(0.55, 1, o.depth);
+    const shown = mixRgb(GREY_RGB, p.rgb, p.reveal);
+    const rgb = mixRgb(BG_RGB, shown, near);
 
     const ringFade = clamp01((o.age - FALL_MS) / 800);
-    if (ringFade > 0){
-      const baseR = cloudRadius * p.orbitK;
-      const ring = p.ringUnit;
-      ctx.beginPath();
-      ctx.moveTo(cx + ring[0][0]*baseR, cy + ring[0][1]*baseR);
-      for (let i=1;i<ring.length;i++){
-        ctx.lineTo(cx + ring[i][0]*baseR, cy + ring[i][1]*baseR);
-      }
-      ctx.strokeStyle = css(rgb);
-      ctx.globalAlpha = (0.08 + 0.12*p.reveal) * ringFade;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
+    if (ringFade > 0 && settings.rings > 0) drawRing(p, rgb, (0.10 + 0.12*p.reveal) * ringFade * settings.rings);
 
-    const trail = p.trail;
-    if (trail.length > 1){
-      for (let i=1;i<trail.length;i++){
-        const a = trail[i-1], b = trail[i];
-        const k = i / trail.length;
-        ctx.beginPath();
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
-        ctx.strokeStyle = css(rgb);
-        ctx.globalAlpha = alpha * k * 0.45;
-        ctx.lineWidth = Math.max(0.8, R * 0.6 * k);
-        ctx.lineCap = 'round';
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-    }
+						drawRibbon(p.trail, R, rgb, near);
+						drawBall(o.sx, o.sy, R, rgb, p.reveal);
+						}
+						return mouthGlow;
+						}
 
-    drawBall(o.sx, o.sy, R, rgb, alpha, 0.35 + 1.8*p.reveal);
-  }
-}
+						// ---------- passing lines ----------
+						let walkers = [];
+						const AVOID_R_FACTOR = 1.7;
+						const FADE_MS = 8000;
 
-// ---------- passing lines ----------
-let walkers = [];
-const AVOID_R_FACTOR = 1.7;
-const FADE_MS = 8000;
-
-function spawnWalker(){
-  const fromLeft = Math.random() < 0.5;
+						function spawnWalker(){
+						const fromLeft = Math.random() < 0.5;
   const y = H * (0.2 + Math.random()*0.65);
   const speed = 0.55 + Math.random()*0.55;
   walkers.push({
@@ -763,25 +1212,26 @@ function updateWalkers(t){
   walkers = walkers.filter(w => {
     if (!w.trail.length) return true;
     return !(w.exited && (t - w.trail[w.trail.length-1].t) > FADE_MS);
-  });
+						});
 
-  if (mouseWalker.active){
-    const last = mouseWalker.trail[mouseWalker.trail.length-1];
-    if (!last || Math.hypot(mouseWalker.x-last.x, mouseWalker.y-last.y) > 2){
-      mouseWalker.trail.push({x:mouseWalker.x, y:mouseWalker.y, t});
-    }
-  }
-  mouseWalker.trail = mouseWalker.trail.filter(p => t - p.t < FADE_MS);
+						if (mouseWalker.active){
+						const last = mouseWalker.trail[mouseWalker.trail.length-1];
+						if (!last || Math.hypot(mouseWalker.x-last.x, mouseWalker.y-last.y) > 2){
+						mouseWalker.trail.push({x:mouseWalker.x, y:mouseWalker.y, t});
+						}
+						}
+						mouseWalker.trail = mouseWalker.trail.filter(p => t - p.t < FADE_MS);
 }
 
 function drawTrail(w, t){
   if (w.trail.length < 2) return;
-  for (let i=1;i<w.trail.length;i++){
-    const a = w.trail[i-1], b = w.trail[i];
-    const age = t - b.t;
-    if (age > FADE_MS) continue;
-    const alpha = w.alphaMax * (1 - age/FADE_MS);
-    if (alpha < 0.004) continue;
+  for (let i=1;i<w.trail.length;i
+			const="" a = "w.trail"[i-1=""], b = "w.trail"[i=""
+			const="" age = "t" -="" b.t=""
+			if="" (age="" >
+							FADE_MS) continue;
+							const alpha = w.alphaMax * (1 - age/FADE_MS);
+							if (alpha < 0.004) continue;
     ctx.beginPath();
     ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
     ctx.strokeStyle = `hsla(${w.hue},${w.sat}%,${w.light}%,${alpha})`;
@@ -821,17 +1271,25 @@ function frame(t){
   lastT = t;
   simTime += dt * 0.001 * settings.speed;
 
+  // ease toward the results layout (or back again)
+  finishK += (finishTarget - finishK) * (1 - Math.exp(-dt/380));
+  if (Math.abs(finishTarget - finishK) < 0.001) finishK = finishTarget;
+  layoutCenter();
+
   ctx.fillStyle = '#05070d';
   ctx.fillRect(0, 0, W, H);
 
-  if (settings.tube) drawTube();
+  drawAmbient();
+  drawTubeBack();
 
   if (settings.lines){
     maybeSpawnWalker(t);
     updateWalkers(t);
     drawWalkers(t);
   }
-  drawParticles(t);
+  const mouthGlow = drawParticles(t);
+
+  drawTubeFront(mouthGlow);
 
   requestAnimationFrame(frame);
 }
@@ -855,68 +1313,70 @@ async function readArduino(port) {
   let buffer = '';
   try {
     while (port.readable && arduinoConnected) {
-      const reader = port.readable.getReader();
-      arduinoReader = reader;
-      try {
-        while (arduinoConnected) {
-          const {value, done} = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, {stream:true});
-          const lines = buffer.split(/\r?\n/);
-          buffer = lines.pop();
-          for (const line of lines) processArduinoLine(line);
-          if (buffer.length > 256) buffer = '';
-        }
-      } finally {
-        reader.releaseLock();
-        arduinoReader = null;
-      }
-      if (!arduinoConnected) break;
-    }
-  } catch (error) {
-    console.error('Arduino serial connection:', error);
-    arduinoStatus.textContent = 'Disconnected — reconnect';
-  } finally {
-    arduinoConnected = false;
-    try { await port.close(); } catch (_) {}
-    if (arduinoPort === port) arduinoPort = null;
-    connectArduinoButton.disabled = false;
-    connectArduinoButton.textContent = 'Connect Arduino';
-    if (arduinoStatus.textContent === 'Connected') arduinoStatus.textContent = 'Disconnected';
-  }
-}
+							const reader = port.readable.getReader();
+							arduinoReader = reader;
+							try {
+							while (arduinoConnected) {
+							const {value, done} = await reader.read();
+							if (done) break;
+							buffer += decoder.decode(value, {stream:true});
+							const lines = buffer.split(/\r?\n/);
+							buffer = lines.pop();
+							for (const line of lines) processArduinoLine(line);
+							if (buffer.length > 256) buffer = '';
+							}
+							} finally {
+							reader.releaseLock();
+							arduinoReader = null;
+							}
+							if (!arduinoConnected) break;
+							}
+							} catch (error) {
+							console.error('Arduino serial connection:', error);
+							arduinoStatus.textContent = 'Disconnected — reconnect';
+							} finally {
+							arduinoConnected = false;
+							try { await port.close(); } catch (_) {}
+							if (arduinoPort === port) arduinoPort = null;
+							connectArduinoButton.disabled = false;
+							connectArduinoButton.textContent = 'Connect Arduino';
+							if (arduinoStatus.textContent === 'Connected') arduinoStatus.textContent = 'Disconnected';
+							}
+							}
 
-connectArduinoButton.addEventListener('click', async () => {
-  if (!('serial' in navigator)) {
-    arduinoStatus.textContent = 'Use Chrome or Edge on localhost';
-    return;
-  }
-  connectArduinoButton.disabled = true;
-  arduinoStatus.textContent = 'Choose your Arduino port…';
-  try {
-    const port = await navigator.serial.requestPort();
-    await port.open({baudRate:115200});
-    arduinoPort = port;
-    arduinoConnected = true;
-    connectArduinoButton.textContent = 'Arduino connected';
-    arduinoStatus.textContent = 'Connected';
-    void readArduino(port);
-  } catch (error) {
-    console.error('Could not connect Arduino:', error);
-    arduinoStatus.textContent = 'Connection cancelled or port busy';
-    connectArduinoButton.disabled = false;
-  }
-});
+							connectArduinoButton.addEventListener('click', async () => {
+							if (!('serial' in navigator)) {
+							arduinoStatus.textContent = 'Use Chrome or Edge on localhost';
+							return;
+							}
+							connectArduinoButton.disabled = true;
+							arduinoStatus.textContent = 'Choose your Arduino port…';
+							try {
+							const port = await navigator.serial.requestPort();
+							await port.open({baudRate:115200});
+							arduinoPort = port;
+							arduinoConnected = true;
+							connectArduinoButton.textContent = 'Arduino connected';
+							arduinoStatus.textContent = 'Connected';
+							void readArduino(port);
+							} catch (error) {
+							console.error('Could not connect Arduino:', error);
+							arduinoStatus.textContent = 'Connection cancelled or port busy';
+							connectArduinoButton.disabled = false;
+							}
+							});
 
-// ---------- Keyboard Controls ----------
-window.addEventListener('keydown', (e) => {
-  const tgt = e.target;
-  if (tgt && (tgt.tagName === 'TEXTAREA' || (tgt.tagName === 'INPUT' && (tgt.type === 'text' || tgt.type === 'number')))) return;
+							syncAll();
 
-  if (['1','2','3','4'].includes(e.key)) addParticle(parseInt(e.key));
-  if (e.key.toLowerCase() === 'r' && ended) resetAll();
-});
-</script>
+							// ---------- Keyboard Controls ----------
+							window.addEventListener('keydown', (e) => {
+							const tgt = e.target;
+							if (tgt && (tgt.tagName === 'TEXTAREA' || (tgt.tagName === 'INPUT' && (tgt.type === 'text' || tgt.type === 'number')))) return;
 
-</body>
+							if (['1','2','3','4'].includes(e.key)) addParticle(parseInt(e.key));
+							if (e.key.toLowerCase() === 'r' && ended) resetAll();
+							});
+						</script>
+
+	</body>
 </html>
