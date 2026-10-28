@@ -43,7 +43,7 @@
   }
 
   .footer-readout {
-    position: fixed; top: 100px;left: 50%; transform: translateX(-50%);
+    position: fixed; top: 100px; left: 50%; transform: translateX(-50%);
     font-size: 16px; color: white; letter-spacing: 0.01em;
   }
 
@@ -132,9 +132,7 @@
     border: 1px solid var(--line); border-radius: 6px; background: none;
   }
 
-  /* ---------- results screen ----------
-     Sits in its own column on the right while the cloud glides to the left,
-     so the two never overlap. On tall/portrait screens it stacks instead. */
+  /* ---------- results screen ---------- */
   .finish {
     position: fixed; top: 64px; bottom: 130px; right: 5vw; width: min(500px, 44vw);
     display: flex; flex-direction: column;
@@ -205,10 +203,10 @@
 
 <!-- Key Mapping Overlay with ID badges for live color sync -->
 <div class="key-mapping" id="keyLegend">
-  <div class="key-chip"><span id="badge-1" class="key-badge" style="background:#75273D;"></span> I often feel this way</div>
-  <div class="key-chip"><span id="badge-2" class="key-badge" style="background:#7C99F7; color:#2D121B;"></span> I sometimes feel this way</div>
-  <div class="key-chip"><span id="badge-3" class="key-badge" style="background:#EDE698; color:#2D121B;"></span> I rarely feel this way</div>
-  <div class="key-chip"><span id="badge-4" class="key-badge" style="background:#659C75;"></span> I never feel this way</div>
+  <div class="key-chip"><span id="badge-1" class="key-badge" style="background:#75273D;">1</span> I often feel this way</div>
+  <div class="key-chip"><span id="badge-2" class="key-badge" style="background:#7C99F7; color:#2D121B;">2</span> I sometimes feel this way</div>
+  <div class="key-chip"><span id="badge-3" class="key-badge" style="background:#EDE698; color:#2D121B;">3</span> I rarely feel this way</div>
+  <div class="key-chip"><span id="badge-4" class="key-badge" style="background:#659C75;">4</span> I never feel this way</div>
 </div>
 
 <div class="prompt">
@@ -229,7 +227,7 @@
   <div class="panel" id="panel">
     <div>
       <div class="row-head"><span>Question</span></div>
-      <textarea id="questionInput" rows="3"></textarea>
+      <textarea id="questionInput" rows="3">How often do you feel isolated?</textarea>
     </div>
     <details open><summary>Results</summary><div class="sec">
       <div class="num-row"><span>Results needed</span><input type="number" id="maxInput" min="1" max="500" step="1" value="75"></div>
@@ -237,7 +235,7 @@
     </div></details>
     <details open><summary>Colours</summary><div class="sec">
       <div class="swatches" id="swatches"></div>
-      <div class="num-row"><span>Hidden grey (while dropping)</span><input type="color" id="greyInput"></div>
+      <div class="num-row"><span>Hidden grey (while dropping)</span><input type="color" id="greyInput" value="#8a8a91"></div>
     </div></details>
     <details open><summary>Colour flashes</summary><div class="sec" id="secFlash"></div></details>
     <details><summary>Balls</summary><div class="sec" id="secBalls"></div></details>
@@ -253,7 +251,7 @@
   </div>
 </div>
 
-<div class="qr"><img src="https_emaie3_github_io_2850_ (1).png"></div>
+<div class="qr"><img src="https_emaie3_github_io_2850_ (1).png" alt="QR"></div>
 <div class="demo-hint">1&ndash;4 test votes · R resets after finish</div>
 
 <div class="arduino-connect"><button id="connectArduino" type="button">Connect Arduino</button><span id="arduinoStatus" role="status">Not connected</span></div>
@@ -277,11 +275,9 @@
 
 <script>
 // =====================================================================
-// COLOURS — edit these four hexes to restyle the cloud
-// Key 1–4 on the keyboard (= the four physical buttons) map to 1–4 here.
+// COLOURS & CONFIGURATION
 // =====================================================================
 const PALETTES = {
-  // current default: RGB (117,39,61), (124,153,247), (237,230,152), (101,156,117)
   exhibit:  { 1: '#75273D', 2: '#7C99F7', 3: '#EDE698', 4: '#659C75' },
   figma:    { 1: '#851D3E', 2: '#E3DCDD', 3: '#FFFFFF', 4: '#659C75' },
   original: { 1: '#4770AE', 2: '#7A77A2', 3: '#B18986', 4: '#E89F63' },
@@ -292,21 +288,17 @@ const CAT_COLORS = Object.assign({}, PALETTES[ACTIVE_PALETTE]);
 let HIDDEN_GREY = '#8a8a91';
 const BG_RGB = [5, 7, 13];
 
-// answer wording comes straight from the key legend above, so editing the
-// legend text also updates the results screen
 const CAT_LABEL = {};
 for (const k of [1,2,3,4]) {
   const badge = document.getElementById(`badge-${k}`);
   CAT_LABEL[k] = badge && badge.parentElement ? badge.parentElement.textContent.trim() : `Answer ${k}`;
 }
 
-// Function to update badge colors on the UI overlay
 function updateKeyBadgeColors() {
   for (const k of [1,2,3,4]) {
     const badge = document.getElementById(`badge-${k}`);
     if (badge) {
       badge.style.backgroundColor = CAT_COLORS[k];
-      // Adjust text color for dark/light backgrounds automatically
       const hex = CAT_COLORS[k].replace('#','');
       const r = parseInt(hex.substr(0,2),16);
       const g = parseInt(hex.substr(2,2),16);
@@ -355,44 +347,37 @@ let GREY_RGB = hexToRgb(HIDDEN_GREY);
 
 // ---------- settings ----------
 const settings = {
-  // balls
-  size: 1,            // ball size multiplier
-  shading: 0.55,      // 0 = flat colour, 1 = fuller matte shading (never glossy)
-  glow: 1,            // halo around a ball while its colour is showing
-  trail: 24,          // trail length (points); 0 = none
-  rings: 1,           // orbit ring brightness; 0 = hidden
-  // motion
-  speed: 1,           // orbit speed multiplier
-  cloud: 1,           // overall cloud size multiplier
-  outer: 1,           // distance of the outer ring (answer 1)
-  inner: 1,           // spread of the inner cloud (answers 2-4)
-  tilt: 0.62,         // 0.25 = flat disc ... 1 = fully round
-  float: 1,           // gentle bobbing amount
-  fall: 1.4,          // seconds for a ball to drop from the tube into the cloud
-  // colour flashes (balls are always grey while dropping)
-  flashRate: 1,       // how often balls flash their colour
-  flashLen: 1,        // how long each flash lasts
-  flashStrength: 1,   // how far a flash goes toward the true colour
-  firstFlash: 3,      // seconds after landing before a ball's first flash (keeps a vote untraceable)
-  // scene
-  ambient: 1,         // soft light behind the cloud
-  qsize: 1,           // question text size
-  tube: true,         // dropper tube at the top
-  lines: false,       // passing lines
-  counter: true,      // "x of y responses"
-  legend: true,       // answer key
-  // results
-  maxVotes: 75,       // results needed before the results screen
-  autoRestart: 0,     // seconds before the results screen restarts by itself; 0 = manual (R)
+  size: 1,
+  shading: 0.55,
+  glow: 1,
+  trail: 24,
+  rings: 1,
+  speed: 1,
+  cloud: 1,
+  outer: 1,
+  inner: 1,
+  tilt: 0.62,
+  float: 1,
+  fall: 1.4,
+  flashRate: 1,
+  flashLen: 1,
+  flashStrength: 1,
+  firstFlash: 3,
+  ambient: 1,
+  qsize: 1,
+  tube: true,
+  lines: false,
+  counter: true,
+  legend: true,
+  maxVotes: 75,
+  autoRestart: 0,
 };
 
-// remember the starting values so "Reset to defaults" can restore them
 const DEFAULT_SETTINGS = Object.assign({}, settings);
 const DEFAULT_COLORS = Object.assign({}, CAT_COLORS);
 const DEFAULT_GREY = HIDDEN_GREY;
 const DEFAULT_QUESTION = document.getElementById('promptText').textContent;
 
-// settings are saved in the browser so tuned values survive a reload
 const SAVE_KEY = 'take_a_beet_settings';
 function saveSettings(){
   try {
@@ -424,13 +409,11 @@ function loadSettings(){
 }
 loadSettings();
 
-// ---------- ball cloud state ----------
 let FALL_MS = 1400;
 const RING_STEPS = 96;
 const cloudCenter = { x: 0, y: 0 };
 let cloudRadius = 0;
 
-// 0 = normal display, 1 = results layout (cloud glides left, colours revealed)
 let finishK = 0;
 let finishTarget = 0;
 
@@ -439,16 +422,13 @@ function layoutCenter(){
   const portrait = W < H*1.05;
   const R0 = Math.min(W,H) * 0.21 * settings.cloud;
 
-  // Where the cloud ends up while the results show, and how big it may be so
-  // that even the outermost orbits (about 2.15x the radius, plus ball size)
-  // stay inside the space that's left over, clear of the results column.
   let endX, endY, fitW, fitH;
   if (portrait){
     endX = W/2;  endY = H*0.27;
     fitW = W*0.45;
     fitH = Math.min(endY - 60, H*0.52 - endY - 20);
   } else {
-    const panelLeft = W*0.95 - Math.min(500, W*0.44);   // left edge of the results column
+    const panelLeft = W*0.95 - Math.min(500, W*0.44);
     endX = 10 + (panelLeft - 24)/2;
     endY = H*0.52;
     fitW = (panelLeft - 24 - 20)/2;
@@ -499,7 +479,6 @@ function roundedRectPath(x, y, w, h, r){
   ctx.closePath();
 }
 
-// the part of the tube that sits BEHIND the balls: dark interior + collar
 function drawTubeBack(){
   const a = 1 - finishK;
   if (!settings.tube || a < 0.01) return;
@@ -530,8 +509,6 @@ function drawTubeBack(){
   ctx.restore();
 }
 
-// the front glass edges (drawn after the balls, so balls read as inside the tube)
-// plus a soft light at the opening whenever a ball is leaving
 function drawTubeFront(mouthGlow){
   const a = 1 - finishK;
   if (!settings.tube || a < 0.01) return;
@@ -562,13 +539,6 @@ function drawTubeFront(mouthGlow){
   ctx.restore();
 }
 
-// ---------- live-data broadcast (read by the results website) ----------
-const dataChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('take_a_beet_channel') : null;
-function publishData(payload){
-  try { localStorage.setItem('take_a_beet_data', JSON.stringify(payload)); } catch (_) {}
-  if (dataChannel) dataChannel.postMessage(payload);
-}
-
 // ---------- adding a ball ----------
 function addParticle(cat){
   if (ended) return;
@@ -588,7 +558,6 @@ function addParticle(cat){
     ly = -40;
   }
 
-  // "I often feel this way" balls sit on the outer shell; everyone else orbits closer in
   const orbitK = (cat === 1) ? (1.45 + Math.random()*0.50) : (0.25 + Math.random()*0.60);
 
   const p = {
@@ -611,7 +580,6 @@ function addParticle(cat){
     pulseStart: -1, pulseDur: 0, pulsePeak: 0, nextPulse: null,
   };
 
-  // unit orbit ellipse (x, y, z) — scaled by the live cloud radius each frame
   p.ringUnit = [];
   for (let i=0;i<=RING_STEPS;i++){
     const a = (i/RING_STEPS) * Math.PI*2;
@@ -630,7 +598,8 @@ function addParticle(cat){
   lastCategory = cat;
   updateReadout();
 
-  publishData({ responseCount, categoryCounts });
+  // Publish live updates over MQTT
+  window.syncToCloud(responseCount, categoryCounts, document.getElementById('promptText').textContent);
 
   if (responseCount >= settings.maxVotes){
     ended = true;
@@ -650,7 +619,7 @@ function buildResults(){
   let topCat = 1;
   for (const k of [1,2,3,4]){
     if (categoryCounts[k] > categoryCounts[topCat]) topCat = k;
-    const pct = categoryCounts[k] / total * 100;
+    const pct = (categoryCounts[k] / total) * 100;
 
     const row = document.createElement('div');
     const head = document.createElement('div');
@@ -679,7 +648,7 @@ function buildResults(){
     resultFills.push({ fill, pct });
   }
 
-  const topPct = Math.round(categoryCounts[topCat] / total * 100);
+  const topPct = Math.round((categoryCounts[topCat] / total) * 100);
   document.getElementById('finishHeadline').textContent =
     `${responseCount} ${responseCount === 1 ? 'person' : 'people'} answered.`;
   document.getElementById('finishQuestion').textContent = document.getElementById('promptText').textContent;
@@ -694,12 +663,11 @@ function scheduleAutoRestart(){
 }
 
 function showFinish(){
-  if (!ended) return;   // results target was raised again before this fired
+  if (!ended) return;
   buildResults();
   finishTarget = 1;
   document.body.classList.add('finished');
   document.getElementById('finish').classList.add('show');
-  // let the layout settle, then animate the bars in
   setTimeout(() => { for (const r of resultFills) r.fill.style.width = r.pct + '%'; }, 900);
   scheduleAutoRestart();
 }
@@ -719,9 +687,7 @@ function resetAll(){
   categoryCounts = {1:0,2:0,3:0,4:0};
   lastCategory = null;
   updateReadout();
-
-  publishData({ responseCount: 0, categoryCounts: {1:0,2:0,3:0,4:0} });
-
+  window.syncToCloud(responseCount, categoryCounts, document.getElementById('promptText').textContent);
   hideFinish();
 }
 
@@ -738,6 +704,7 @@ questionInput.value = document.getElementById('promptText').textContent;
 questionInput.addEventListener('input', (e) => {
   document.getElementById('promptText').textContent = e.target.value;
   saveSettings();
+  window.syncToCloud(responseCount, categoryCounts, e.target.value);
 });
 
 document.getElementById('maxInput').addEventListener('input', (e) => {
@@ -755,8 +722,6 @@ document.getElementById('maxInput').addEventListener('input', (e) => {
   }
 });
 
-// ---------- adjusters: built from this list, saved between reloads ----------
-// [section, setting, label, min, max, step, format]
 const x2 = v => v.toFixed(2) + '×';
 const SLIDERS = [
   ['secFlash',  'flashRate',     'Flash frequency',            0.25, 4,    0.05, x2],
@@ -774,13 +739,12 @@ const SLIDERS = [
   ['secMotion', 'inner',         'Inner cloud spread',         0.5,  1.8,  0.05, x2],
   ['secMotion', 'tilt',          'View tilt (flat to round)',  0.25, 1,    0.01, v => v.toFixed(2)],
   ['secMotion', 'float',         'Float / bobbing',            0,    3,    0.05, x2],
-  ['secMotion', 'fall',          'Drop time',                  0.6,  4,    0.1,  v => v.toFixed(1) + 's'],
+  ['secMotion', 'fall',          'Drop time',                  0.5,  3,    0.05, x2],
   ['secSceneSliders', 'ambient', 'Background glow',            0,    2.5,  0.05, x2],
   ['secSceneSliders', 'qsize',   'Question text size',         0.6,  2,    0.05, x2],
 ];
 const sliderEls = {};
 
-// things that depend on a setting beyond just reading it each frame
 function applySideEffects(){
   FALL_MS = settings.fall * 1000;
   document.documentElement.style.setProperty('--qs', settings.qsize);
@@ -801,6 +765,8 @@ function applySideEffects(){
     head.appendChild(name); head.appendChild(valEl);
     const input = document.createElement('input');
     input.type = 'range'; input.min = min; input.max = max; input.step = step;
+    input.value = settings[key];
+    valEl.textContent = fmt(settings[key]);
     input.addEventListener('input', (e) => {
       settings[key] = parseFloat(e.target.value);
       valEl.textContent = fmt(settings[key]);
@@ -830,7 +796,6 @@ document.getElementById('legendToggle').addEventListener('change', (e) => {
   settings.legend = e.target.checked; applySideEffects(); saveSettings();
 });
 
-// push every stored value back into the controls (used on load and on reset)
 function syncAll(){
   for (const key in sliderEls){
     const el = sliderEls[key];
@@ -863,7 +828,6 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   syncAll();
 });
 
-// copy the current settings as JSON, handy for pasting into the defaults later
 document.getElementById('copyBtn').addEventListener('click', () => {
   const text = JSON.stringify({ settings, colors: CAT_COLORS, grey: HIDDEN_GREY }, null, 2);
   const btn = document.getElementById('copyBtn');
@@ -902,7 +866,7 @@ const swatchInputs = {};
       CAT_COLORS[k] = e.target.value;
       const rgb = hexToRgb(CAT_COLORS[k]);
       for (const p of particles) if (p.cat === k) p.rgb = rgb;
-      updateKeyBadgeColors(); // Update overlay badges live
+      updateKeyBadgeColors();
       saveSettings();
     });
     const cap = document.createElement('span');
@@ -911,14 +875,10 @@ const swatchInputs = {};
     label.appendChild(cap);
     wrap.appendChild(label);
   }
-  updateKeyBadgeColors(); // Set initial badge colors on load
+  updateKeyBadgeColors();
 })();
 
 // ---------- drawing ----------
-
-// One ball: soft halo while its colour is showing, then an opaque matte sphere.
-// Light comes from the upper-left, but there is no specular highlight — just a
-// gentle lift on that side and a darker, rounder edge. shading = 0 gives flat colour.
 function drawBall(x, y, R, rgb, reveal){
   if (reveal > 0.02 && settings.glow > 0){
     const hr = R * (1.5 + 1.3*reveal);
@@ -941,13 +901,11 @@ function drawBall(x, y, R, rgb, reveal){
   ctx.arc(x, y, R, 0, Math.PI*2);
   ctx.fill();
 
-  // hairline edge so overlapping balls stay distinct
   ctx.lineWidth = 1;
   ctx.strokeStyle = 'rgba(0,0,0,0.30)';
   ctx.stroke();
 }
 
-// tapered comet ribbon behind a ball: one smooth filled shape, fading toward the tail
 function drawRibbon(trail, R, rgb, a){
   const n = trail.length;
   if (n < 3) return;
@@ -973,7 +931,6 @@ function drawRibbon(trail, R, rgb, a){
   ctx.fill();
 }
 
-// orbit ring, split into a brighter near side and a dimmer far side for depth
 function drawRing(p, rgb, alpha){
   const ring = p.ringUnit;
   const base = cloudRadius * p.orbitK;
@@ -1001,7 +958,6 @@ function drawRing(p, rgb, alpha){
   ctx.globalAlpha = 1;
 }
 
-// faint ambient light behind the cloud so it sits in a space, not on a flat fill
 function drawAmbient(){
   const r = cloudRadius * 2.6;
   const g = ctx.createRadialGradient(cloudCenter.x, cloudCenter.y, 0, cloudCenter.x, cloudCenter.y, r);
@@ -1035,11 +991,9 @@ function updatePulse(p, t, age){
     p.reveal = 0;
   }
 
-  // when the results are showing, every ball shows its true colour
   if (finishK > 0) p.reveal = Math.max(p.reveal, finishK);
 }
 
-// returns how strongly the tube mouth should glow (a ball is leaving it)
 function drawParticles(t){
   const cx = cloudCenter.x, cy = cloudCenter.y;
   let mouthGlow = 0;
@@ -1080,8 +1034,6 @@ function drawParticles(t){
     const scale = lerp(0.6, 1.4, o.depth) * (1 + 0.1*p.reveal);
     const R = p.baseR * scale * settings.size;
 
-    // balls are opaque; distance is shown by fading their colour toward the
-    // background rather than by making them see-through
     const near = lerp(0.55, 1, o.depth);
     const shown = mixRgb(GREY_RGB, p.rgb, p.reveal);
     const rgb = mixRgb(BG_RGB, shown, near);
@@ -1166,7 +1118,7 @@ function drawTrail(w, t){
     const a = w.trail[i-1], b = w.trail[i];
     const age = t - b.t;
     if (age > FADE_MS) continue;
-    const alpha = w.alphaMax * (1 - age/FADE_MS);
+    const alpha = w.alphaMax * (1 - 1 * (age/FADE_MS));
     if (alpha < 0.004) continue;
     ctx.beginPath();
     ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
@@ -1207,7 +1159,6 @@ function frame(t){
   lastT = t;
   simTime += dt * 0.001 * settings.speed;
 
-  // ease toward the results layout (or back again)
   finishK += (finishTarget - finishK) * (1 - Math.exp(-dt/380));
   if (Math.abs(finishTarget - finishK) < 0.001) finishK = finishTarget;
   layoutCenter();
@@ -1314,5 +1265,39 @@ window.addEventListener('keydown', (e) => {
 });
 </script>
 
+<!-- SECURE MQTT CLIENT FOR REAL-TIME SYNC -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+<script>
+    const projectionClientId = "take_a_beet_projection_" + Math.random().toString(36).substring(7);
+    // Corrected to port 8884 with "/mqtt" path for secure HTTPS sync
+    const projClient = new Paho.MQTT.Client("broker.hivemq.com", 8884, "/mqtt", projectionClientId);
+
+    projClient.onConnectionLost = function (responseObject) {
+        console.log("Connection lost: " + responseObject.errorMessage);
+    };
+
+    projClient.connect({
+        useSSL: true, // Required for secure WebSocket connections over HTTPS
+        onSuccess: function () {
+            console.log("Projection connected securely!");
+        },
+        onFailure: function (message) {
+            console.log("Projection connection failed: " + message.errorMessage);
+        }
+    });
+
+    window.syncToCloud = function(count, counts, qText) {
+        if (projClient.isConnected()) {
+            const messagePayload = JSON.stringify({
+                responseCount: count,
+                categoryCounts: counts,
+                question: qText || document.getElementById('promptText').textContent
+            });
+            const message = new Paho.MQTT.Message(messagePayload);
+            message.destinationName = "takeabeet/live/session";
+            projClient.send(message);
+        }
+    };
+</script>
 </body>
 </html>
