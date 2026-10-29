@@ -26,8 +26,8 @@ const int HAND_RESET = 120;
 bool handReady = true;
 
 // Calibrated voting distances
-const int holeMin[4] = {210, 280, 380, 460};
-const int holeMax[4] = {270, 350, 450, 500};
+const int holeMin[4] = {250, 330, 430, 490};
+const int holeMax[4] = {320, 420, 480, 550};
 
 // Duplicate vote prevention
 const unsigned long MIN_LOCKOUT = 600;
