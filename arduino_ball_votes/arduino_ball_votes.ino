@@ -1,4 +1,3 @@
-
 #include <Wire.h>
 #include <VL53L0X.h>
 #include <Servo.h>
@@ -22,13 +21,13 @@ const int OPEN_ANGLE = 90;
 const unsigned long OPEN_TIME = 300;
 
 // Hand detection
-const int HAND_TRIGGER = 150;
-const int HAND_RESET = 200;
+const int HAND_TRIGGER = 70;
+const int HAND_RESET = 120;
 bool handReady = true;
 
-// Your calibrated voting distances
-const int holeMin[4] = {180, 240, 300, 360};
-const int holeMax[4] = {210, 270, 320, 380};
+// Calibrated voting distances
+const int holeMin[4] = {210, 280, 380, 460};
+const int holeMax[4] = {270, 350, 450, 500};
 
 // Duplicate vote prevention
 const unsigned long MIN_LOCKOUT = 600;
@@ -44,7 +43,6 @@ bool gateOpen = false;
 unsigned long gateOpenedAt = 0;
 
 void releaseSensor(int pin) {
-  // XSHUT is low-voltage logic: release, don't drive HIGH.
   pinMode(pin, INPUT);
 }
 
@@ -57,31 +55,35 @@ void setup() {
   Serial.begin(115200);
   Wire.begin();
 
-  // Hold both sensors in shutdown initially.
+  // Hold both sensors in shutdown
   shutDownSensor(HAND_XSHUT);
   shutDownSensor(VOTE_XSHUT);
   delay(20);
 
-  // Start hand sensor and change its address.
+  // Initialise hand sensor
   releaseSensor(HAND_XSHUT);
   delay(20);
 
   handSensor.setTimeout(100);
+
   if (!handSensor.init()) {
     Serial.println("ERROR:HAND_SENSOR");
     while (1);
   }
+
   handSensor.setAddress(HAND_ADDRESS);
 
-  // Start voting sensor and change its address.
+  // Initialise voting sensor
   releaseSensor(VOTE_XSHUT);
   delay(20);
 
   voteSensor.setTimeout(100);
+
   if (!voteSensor.init()) {
     Serial.println("ERROR:VOTE_SENSOR");
     while (1);
   }
+
   voteSensor.setAddress(VOTE_ADDRESS);
 
   handSensor.startContinuous(30);
@@ -97,14 +99,15 @@ void loop() {
   unsigned long now = millis();
 
   // -------- SENSOR 1: HAND + SERVO --------
-  int handDistance = handSensor.readRangeContinuousMillimeters();
-  Serial.print("Hand distance: ");
-  Serial.print(handDistance);
-  Serial.println(" mm");
-  delay(100);
 
+  int handDistance = handSensor.readRangeContinuousMillimeters();
+  Serial.print("Hand: ");
+  Serial.print(handDistance);
+  Serial.print(" mm | Ready: ");
+  Serial.println(handReady ? "YES" : "NO");
 
   if (!handSensor.timeoutOccurred()) {
+
     if (handReady && !gateOpen &&
         handDistance > 0 && handDistance < HAND_TRIGGER) {
 
@@ -119,17 +122,24 @@ void loop() {
     }
   }
 
-  // Close the gate after OPEN_TIME.
+  // Close gate after OPEN_TIME
   if (gateOpen && now - gateOpenedAt >= OPEN_TIME) {
     gate.write(CLOSED_ANGLE);
     gateOpen = false;
   }
 
   // -------- SENSOR 2: BALL VOTING --------
+
   int distance = voteSensor.readRangeContinuousMillimeters();
+
+  // Print voting sensor distance
+  Serial.print("Vote sensor distance: ");
+  Serial.print(distance);
+  Serial.println(" mm");
 
   if (voteSensor.timeoutOccurred()) {
     clearStart = 0;
+    delay(100);
     return;
   }
 
@@ -151,8 +161,9 @@ void loop() {
     clearStart = 0;
   }
 
-  // Rearm only after the path has been clear long enough.
+  // Rearm after path has been clear
   if (!voteReady) {
+
     if (distance > CLEAR_DISTANCE) {
       if (clearStart == 0) clearStart = now;
     } else {
@@ -167,4 +178,6 @@ void loop() {
       clearStart = 0;
     }
   }
+
+  delay(100);
 }
