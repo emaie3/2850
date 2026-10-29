@@ -21,13 +21,13 @@ const int OPEN_ANGLE = 90;
 const unsigned long OPEN_TIME = 300;
 
 // Hand detection
-const int HAND_TRIGGER = 70;
+const int HAND_TRIGGER = 100;
 const int HAND_RESET = 120;
 bool handReady = true;
 
 // Calibrated voting distances
-const int holeMin[4] = {250, 330, 430, 490};
-const int holeMax[4] = {320, 420, 480, 550};
+const int holeMin[4] = {250, 326, 426, 486};
+const int holeMax[4] = {325, 425, 485, 550};
 
 // Duplicate vote prevention
 const unsigned long MIN_LOCKOUT = 600;
